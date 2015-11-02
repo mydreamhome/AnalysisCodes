@@ -1,6 +1,6 @@
 class Electron;
 class Muon;
-class ElectronMuon;
+class ElectronMuonOppChrg;
 class ElectronMuonMet;
 
 class ElectronMuonExtraLoose
@@ -47,7 +47,7 @@ public:
         v= new vector<DATA>;
     }
     
-    vector<DATA>* setData(ElectronMuon& em, Electron& elect, Muon& mu)
+    vector<DATA>* setData(ElectronMuonOppChrg& em, Electron& elect, Muon& mu)
     {
         vector<DATAE>* dve;
         vector<DATAM>* dvm;

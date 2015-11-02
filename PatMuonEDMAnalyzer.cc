@@ -26,7 +26,9 @@ using namespace std;
 #include "Electron.hh"
 #include "Muon.hh"
 #include "ElectronMuon.hh"
+#include "ElectronMuonOppChrg.hh"
 #include "ElectronMuonExtraLoose.hh"
+
 
 #include "Met.hh"
 
@@ -187,8 +189,12 @@ int main(int argc, char* argv[])
     em.setData(obfe,obfm);
     em.fillHisto(outputFile_.c_str());
     
+    ElectronMuonOppChrg emopp;
+    emopp.setData(em);
+    emopp.fillHisto(outputFile_.c_str());
+    
     ElectronMuonExtraLoose emel;
-    emel.setData(em,obe,obm);
+    emel.setData(emopp,obe,obm);
     emel.fillHisto(outputFile_.c_str());
     
     Met obmet;

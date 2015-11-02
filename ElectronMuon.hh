@@ -1,6 +1,6 @@
 class Electron;
 class Muon;
-class ElectronMuonExtraLoose;
+class ElectronMuonOppChrg;
 
 class ElectronMuon
 {
@@ -46,27 +46,23 @@ public:
         int events = 0;
         for(unsigned int i=0;i<fe.v->size();i++)//loop over all events
         {
-            
+            int c=0;
+
             vector<DATAE>* edv = (vector<DATAE>*)fe.v->at(i); //pointer to electron's collection(1st electron) in a particular event
             vector<DATAM>* mdv = (vector<DATAM>*)fm.v->at(i);
             
             if(edv->size()==0 || mdv->size()==0)continue;
             
-            int c=0;
             DATA emd;
-            for(unsigned int j=0;j<edv->size();j++)
-            {
-                DATAE e = edv->at(j);
-                
-                for(unsigned int k=0;k<mdv->size();k++)
-                {
-                    DATAM m = mdv->at(j);
                     
-                    if( (e.charge * m.charge) < 0 )
+                    if( edv->size()==1 && mdv->size()==1)
                     {
+                        DATAE e = edv->at(0);
+                        DATAM m = mdv->at(0);
+                        
                         emd.evtID=i;
-                        emd.eID=j;
-                        emd.mID=k;
+                        emd.eID=0;
+                        emd.mID=0;
                         emd.ech=e.charge;
                         emd.mch=m.charge;
                         emd.electronPt=e.pt;
@@ -78,8 +74,7 @@ public:
                         
                         c++;
                     }
-                }
-            }
+
             if(c==1)
             {
                 events++;
@@ -88,7 +83,7 @@ public:
                 
             }
         }
-        cout<<"Total number of events having ooposite charge only one tight electron and only one tight muon: " << events <<endl;
+        cout<<"Total number of events having only one tight electron and only one tight muon: " << events <<endl;
         return v;
     }
   
@@ -96,8 +91,8 @@ public:
     {
         DATA d;
         
-        fwlite::TFileService fs = fwlite::TFileService("electronMuonOppositeCharge.root");
-        TFileDirectory dir = fs.mkdir("electronMuonOppositeCharge");
+        fwlite::TFileService fs = fwlite::TFileService("electronMuononeTeoneTm.root");
+        TFileDirectory dir = fs.mkdir("electronMuononeTeoneTm");
         TH1F* electronPt_  = dir.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
         TH1F* electronEta_  = dir.make<TH1F>("electronEta_"  , "eta"  ,   100,   -3.0, 3.0);
         TH1F* electronPhi_  = dir.make<TH1F>("electronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
@@ -123,5 +118,5 @@ public:
         delete v;
         v=0;
     }
-    friend class ElectronMuonExtraLoose;
+    friend class ElectronMuonOppChrg;
 };
