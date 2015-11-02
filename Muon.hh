@@ -190,8 +190,8 @@ public:
         vector<DATA>* dv;
         DATA d;
         
-        fwlite::TFileService fs = fwlite::TFileService(outputFile);
-        TFileDirectory dir = fs.mkdir("analyzePatMuon");
+        fwlite::TFileService fs = fwlite::TFileService("tight_muon.root");
+        TFileDirectory dir = fs.mkdir("tight_muon");
         TH1F* muonPt_  = dir.make<TH1F>("muonPt_"  , "pt"  ,   100,   0., 400.);
         
         for(unsigned int i=0; i < v->size(); i++)

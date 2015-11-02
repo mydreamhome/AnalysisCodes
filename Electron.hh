@@ -191,8 +191,8 @@ public:
         vector<DATA>* dv;
         DATA d;
         
-        fwlite::TFileService fs = fwlite::TFileService("E.root");
-        TFileDirectory dir = fs.mkdir("E");
+        fwlite::TFileService fs = fwlite::TFileService("tight_electron.root");
+        TFileDirectory dir = fs.mkdir("tight_electron");
         TH1F* electronPt_  = dir.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
         
         for(unsigned int i=0; i < v->size(); i++)
