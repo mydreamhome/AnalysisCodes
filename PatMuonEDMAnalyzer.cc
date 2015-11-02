@@ -1,5 +1,4 @@
 #include <memory>
-#include"stdio.h"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -20,19 +19,90 @@
 
 #include "DataFormats/PatCandidates/interface/Electron.h"
 
+
 #include "PhysicsTools/FWLite/interface/TFileService.h"
 #include "PhysicsTools/FWLite/interface/CommandLineParser.h"
 using namespace std;
 
+
 #include "Electron.hh"
 #include "Muon.hh"
 #include "ElectronMuon.hh"
-#include "ElectronMuonOppChrg.hh"
 #include "ElectronMuonExtraLoose.hh"
-#include "Met.hh"
-#include "ElMuMet.hh"
 
-// jobid startfile endfile
+#include "Met.hh"
+
+class ElectronMuonMet
+{
+    struct MetDATA
+    {
+        
+        float  pt;
+        bool   ptc;
+    };
+
+	struct DATA{
+		int evtID;
+		float metPt;
+
+	};
+
+	vector<DATA>* v;
+public:
+	ElectronMuonMet()
+	{
+		v = new vector<DATA>;
+	}
+
+    vector<DATA>* setData(ElectronMuonExtraLoose& emel, Met& met)
+    {
+        int rejected_met = 0;
+        for(unsigned int i=0;i<emel.v->size();i++)
+        {
+            int evtID=((emel.v)->at(i)).evtID;
+            vector<MetDATA>* dv = (vector<MetDATA>*) met.v.at(evtID);
+	 
+	   for(unsigned int j=0;j<dv->size();j++)
+            {
+                MetDATA metd =(MetDATA) dv->at(j);
+               if(metd.ptc==true)
+                                {
+                                    DATA d ={evtID,metd.pt};
+                                    v->push_back(d);
+                                    cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
+                                }
+               else rejected_met++;
+            }
+            
+        }
+        cout<<"total number of rejected events due to no met passing cut"<<rejected_met<<endl;
+        return v;
+    }
+    
+    void fillHisto(const char* outputFile)
+    {
+      //  vector<DATA>* dv;
+        DATA d;
+        
+        fwlite::TFileService fs = fwlite::TFileService("met.root");
+        TFileDirectory dir = fs.mkdir("met");
+        TH1F* metPt_  = dir.make<TH1F>("metPt_"  , "pt"  ,   100,   0., 400.);
+        
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+                d=v->at(i);
+                metPt_->Fill(d.metPt);
+            
+        }
+        return;
+    }
+    
+    ~ElectronMuonMet()
+    {
+        delete v;
+        v=0;
+    }
+};
 
 int main(int argc, char* argv[])
 {
@@ -47,224 +117,391 @@ int main(int argc, char* argv[])
   // load framework libraries
   gSystem->Load( "libFWCoreFWLite" );
   AutoLibraryLoader::enable();
-    
-    int s=atoi(argv[2]);
-    int n=atoi(argv[3]);
-    int jobid=atoi(argv[1]);
-    
-    char constName[]="/afs/cern.ch/work/p/ppriyank/public/topQuark/CMSSW_7_4_7_patch2/src/Analysis/antiTopInput/crab_antiTopInput/results/B2GEDMNtuple_";
-    char fname[160];
-    
-    Electron*  ep=0;
-    Electron*  epf1=0;
-    Electron*  epf2=0;
-    Muon*  mp=0;
-    Muon*  mpf1=0;
-    Muon*  mpf2=0;
-    Met* metp=0;
-    Met* metpf=0;
-    ElectronMuon*  emp=0;
-    ElectronMuon*  emp2e=0;
-    ElectronMuon*  emp2mu=0;
-    ElectronMuonOppChrg* empOppChrg=0;
-    ElectronMuonOppChrg* empOppChrg2e=0;
-    ElectronMuonOppChrg* empOppChrg2mu=0;
-    ElectronMuonExtraLoose* empel=0;
-    ElectronMuonExtraLoose* empel2e=0;
-    ElectronMuonExtraLoose* empel2mu=0;
-    ElectronMuonMet* obpEMM=0;
-    ElectronMuonMet* obpEMM2e=0;
-    ElectronMuonMet* obpEMM2mu=0;
-    
-  //  fwlite::TFileService fse = fwlite::TFileService("tight_electron.root");
-   // fwlite::TFileService fsm = fwlite::TFileService("tight_muon.root");
-   // fwlite::TFileService fsmet = fwlite::TFileService("original_met.root");
-    
-    char ofname[200];
-    sprintf(ofname,"electronMuononeTeoneTm_%d.root",jobid);
-    fwlite::TFileService fsem = fwlite::TFileService(ofname);
 
-    sprintf(ofname,"electronMuononeTeoneTm2e_%d.root",jobid);
-    fwlite::TFileService fsem2e = fwlite::TFileService(ofname);
+  // initialize command line parser
+    optutl::CommandLineParser parser ("Analyze FWLite Histograms");
+
+  // set defaults
+ // parser.integerValue ("maxEvents"  ) = 1000;
+//  parser.integerValue ("outputEvery") =   10;
+  parser.stringValue  ("outputFile" ) = "analyzeEdmTuple.root";
+
+  // parse arguments
+  parser.parseArguments (argc, argv);
+ // int maxEvents_ = parser.integerValue("maxEvents");
+  //unsigned int outputEvery_ = parser.integerValue("outputEvery");
+  std::string outputFile_ = parser.stringValue("outputFile");
+  std::vector<std::string> inputFiles_ = parser.stringVector("inputFiles");
+
+  // book a set of histograms
+    fwlite::TFileService fs = fwlite::TFileService(outputFile_.c_str());
+    TFileDirectory dir = fs.mkdir("analyzePatMuon");
+
+ // TH1F* muonEta_ = dir.make<TH1F>("muonEta" , "eta" ,   100,  -3.,   3.);
+ // TH1F* muonPhi_ = dir.make<TH1F>("muonPhi" , "phi" ,   100,  -5.,   5.);
+
+  // loop the events
+ // int ievt=0;  
+
+    Electron obe;
     
-    sprintf(ofname,"electronMuononeTeoneTm2mu_%d.root",jobid);
-    fwlite::TFileService fsem2mu = fwlite::TFileService(ofname);
+
+    obe.setData(inputFiles_[0].c_str());
+    obe.fillHisto(outputFile_.c_str());
     
-    sprintf(ofname,"electronMuonOppositeCharge_%d.root",jobid);
-    fwlite::TFileService fsemOppChrg = fwlite::TFileService(ofname);
-    sprintf(ofname,"electronMuonOppositeCharge2e_%d.root",jobid);
-    fwlite::TFileService fsemOppChrg2e = fwlite::TFileService(ofname);
-    sprintf(ofname,"electronMuonOppositeCharge2mu_%d.root",jobid);
-    fwlite::TFileService fsemOppChrg2mu = fwlite::TFileService(ofname);
+   //obe.printData(0,"Primary Events information.");
     
-    sprintf(ofname,"electronMuonExtraloose_%d.root",jobid);
-    fwlite::TFileService fsemel = fwlite::TFileService(ofname);
-    sprintf(ofname,"electronMuonExtraloose2e_%d.root",jobid);
-    fwlite::TFileService fsemel2e = fwlite::TFileService(ofname);
-    sprintf(ofname,"electronMuonExtraloose2mu_%d.root",jobid);
-    fwlite::TFileService fsemel2mu = fwlite::TFileService(ofname);
     
-    sprintf(ofname,"met_%d.root",jobid);
-    fwlite::TFileService fsEMM = fwlite::TFileService(ofname);
-    sprintf(ofname,"met2e_%d.root",jobid);
-    fwlite::TFileService fsEMM2e = fwlite::TFileService(ofname);
-    sprintf(ofname,"met2mu_%d.root",jobid);
-    fwlite::TFileService fsEMM2mu = fwlite::TFileService(ofname);
     
- //   vector<TH1F*>* hve = Electron::getHistPointers(fse);
-   // vector<TH1F*>* hvm = Muon::getHistPointers(fsm);
-   // vector<TH1F*>* hvmet = Met::getHistPointers(fsmet);
+    Electron obfe(obe.selectData());
+ 
+    //obfe.printData(0,"Filltered Events information.");
     
-    vector<TH1F*>* hvem = ElectronMuon::getHistPointers(fsem, 1);
-    vector<TH1F*>* hvem2e = ElectronMuon::getHistPointers(fsem2e, 2);
-    vector<TH1F*>* hvem2mu = ElectronMuon::getHistPointers(fsem2mu, 3);
     
-    vector<TH1F*>* hvemOppChrg = ElectronMuonOppChrg::getHistPointers(fsemOppChrg, 1);
-    vector<TH1F*>* hvemOppChrg2e = ElectronMuonOppChrg::getHistPointers(fsemOppChrg2e, 2);
-    vector<TH1F*>* hvemOppChrg2mu = ElectronMuonOppChrg::getHistPointers(fsemOppChrg2mu, 3);
+    Muon obm;
+    obm.setData(inputFiles_[0].c_str());
+    obm.fillHisto(outputFile_.c_str());
     
-    vector<TH1F*>* hvemel = ElectronMuonExtraLoose::getHistPointers(fsemel, 1);
-    vector<TH1F*>* hvemel2e = ElectronMuonExtraLoose::getHistPointers(fsemel2e, 2);
-    vector<TH1F*>* hvemel2mu = ElectronMuonExtraLoose::getHistPointers(fsemel2mu, 3);
+   // obm.printData(0,"Primary Events information for MUON.");
     
-    vector<TH1F*>* hvEMM = ElectronMuonMet::getHistPointers(fsEMM, 1);
-    vector<TH1F*>* hvEMM2e = ElectronMuonMet::getHistPointers(fsEMM2e, 2);
-    vector<TH1F*>* hvEMM2mu = ElectronMuonMet::getHistPointers(fsEMM2mu, 3);
     
-    int cTTE=0,cEW1e=0,cEW2e=0,cTTM=0,cEW1m=0,cEW2m=0,c1E1M=0,c2E=0,c2M=0,cOppChrg1e1m=0,cOppChrg2e=0,cOppChrg2m=0,cExLoose1e1m=0,cExLoose2e=0,cExLoose2m=0,cMetCut=0,cEMuMet1e1m=0,cEMuMet2e=0,cEMuMet2m=0;
+    Muon obfm(obm.selectData());
+    //obfm.printData(0,"Filltered Events information for MUON.");
     
-    for(int i=s;i<=n;i++)
-    {
-        
-        sprintf(fname,"%s%d.root",constName,i);
-        cout<<"File Name:"<<fname<<endl;
+    ElectronMuon em;
+    em.setData(obfe,obfm);
     
-        ep = new Electron();
-        ep->setData(fname);
-       // ep->fillHisto(hve);
-        epf1 = new Electron(ep->selectData1());
-        epf2 = new Electron(ep->selectData2());
+    ElectronMuonExtraLoose emel;
+    emel.setData(em,obe,obm);
+    
+    Met obmet;
+    obmet.setData(inputFiles_[0].c_str());
+   // obmet.fillHisto(outputFile_.c_str());
+    
+    obmet.printData(0);
+    
+    
+    ElectronMuonMet obEMM;
+    
+    obEMM.setData(emel,obmet);
+    obEMM.fillHisto(outputFile_.c_str());
+
+    
+    return 0;
+    
+    ////////////////
+}
+/*
+
+        int total_number_of_selected_events =0;
+        std::vector<int> selected_event_number;
+   
+        bool final_state_is_electron_muon = true;
+        bool final_state_is_electron_electron = false;
+        bool final_state_is_muon_muon = false;
         
-                cTTE += ep->getTTE();
-                cEW1e += ep->getEW1E();
-                cEW2e += ep->getEW2E();
+        bool want_to_select_event_based_on_vertex_cuts_pass = true;
+        bool want_to_select_only_opposite_charge_particles = true;
+        bool want_to_select_event_based_on_tight_cuts_pass = true;
+        bool want_to_select_event_based_on_loose_cuts_pass_matching_with_tight_cuts_pass = true;
+        
+        bool want_to_fill_pt_of_selected_event = true;
+        bool based_on_tight_cuts_pass = true;
+        bool based_on_matching_of_tight_cuts_with_loose_cuts = false;
+
+        std::vector<float>* collective_cuts_pt(int, int, edm::EventBase const & );
+        int isequal(std::vector<int>* , std::vector<int>* );
+        std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+        int event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(int, edm::EventBase const & );
+        int event_selection_based_on_only_opposite_charge_particles(int, int, edm::EventBase const & );
+        int event_selection_based_on_tight_cuts_particles(int, edm::EventBase const & );
+        int event_selection_based_on_vertex_cuts(edm::EventBase const & );
         
         
-        mp = new Muon();
-        mp->setData(fname);
-       // mp->fillHisto(hvm);
-        mpf1 = new Muon(mp->selectData1());
-        mpf2 = new Muon(mp->selectData2());
+	// break loop if maximal number of events is reached 
+	if(maxEvents_>0 ? ievt+1>maxEvents_ : false) break;
+	// simple event counter
+	if(outputEvery_!=0 ? (ievt>0 && ievt%outputEvery_==0) : false) 
+	  std::cout << "  processing event: " << (ievt+1) << std::endl;
+        std::cout << " event number : " << (ievt+1) << std::endl;  
+#define electron 11
+#define muon 13
+#define loose 0
+#define tight 1
+          
+          if (want_to_fill_pt_of_selected_event)
+          {
+              if(final_state_is_electron_muon || final_state_is_electron_electron)
+              {
+                  if(based_on_tight_cuts_pass)
+                  {
+                      if(event_selection_based_on_tight_cuts_particles(electron, event) == 0)
+                      {
+                          // fill electron pt here
+                          std::vector<float>* a = collective_cuts_pt(electron, tight, event);
+                          for(unsigned int i=0; i<a->size(); i++)
+                          {
+                             // electronPt_ ->Fill((*a)[i]);
+                          }
+                      }
+                  }
+                  if(based_on_matching_of_tight_cuts_with_loose_cuts)
+                  {
+                      if(event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(electron, event) == 0)
+                      {
+                          // fill electron pt here
+                          std::vector<float>* a = collective_cuts_pt(electron, tight, event);
+                          if(isequal(collective_cuts(electron, loose, event), collective_cuts(electron, tight, event)))
+                          {
+                          for(unsigned int i=0; i<a->size(); i++)
+                          {
+                             // electronPt_ ->Fill((*a)[i]);
+                          }
+                          }
+                      }
+                  }
+              }
+              if(final_state_is_electron_muon || final_state_is_muon_muon)
+              {
+                  if(based_on_tight_cuts_pass)
+                  {
+                      if(event_selection_based_on_tight_cuts_particles(muon, event) == 0)
+                      {
+                          // fill muon pt here
+                          std::vector<float>* b = collective_cuts_pt(muon, tight, event);
+                          for(unsigned int i=0; i<b->size(); i++)
+                          {
+                             // muonPt_ ->Fill((*b)[i]);
+                          }
+                      }
+                  }
+                  if(based_on_matching_of_tight_cuts_with_loose_cuts)
+                  {
+                      if(event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(muon, event) == 0)
+                      {
+                          // fill muon pt here
+                          std::vector<float>* b = collective_cuts_pt(muon, tight, event);
+                          if(isequal(collective_cuts(muon, loose, event), collective_cuts(muon, tight, event)))
+                          {
+                              for(unsigned int i=0; i<b->size(); i++)
+                              {
+                                //  muonPt_ ->Fill((*b)[i]);
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          
+          if (want_to_select_event_based_on_vertex_cuts_pass)
+          {
+                  if(event_selection_based_on_vertex_cuts(event))
+                  {
+                      std::cout<<"event "<< (ievt+1) <<" rejected due to failing of vertex cuts" <<std::endl;
+                      continue;
+                  }
+          }
+          
+          if (want_to_select_only_opposite_charge_particles)
+          {
+              if(final_state_is_electron_muon)
+              {
+              if(event_selection_based_on_only_opposite_charge_particles(electron, muon, event))
+                  
+              {
+                  std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of electron and muon" <<std::endl;
+                  continue;
+              }
+              }
+              if(final_state_is_electron_electron)
+              {
+                  if(event_selection_based_on_only_opposite_charge_particles(electron, electron, event))
+                      
+                  {
+                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of electron and electron" <<std::endl;
+                      continue;
+                  }
+              }
+              if(final_state_is_muon_muon)
+              {
+                  if(event_selection_based_on_only_opposite_charge_particles(muon, muon, event))
+                      
+                  {
+                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of muon and muon" <<std::endl;
+                      continue;
+                  }
+              }
+          }
+          
+          if (want_to_select_event_based_on_tight_cuts_pass)
+          {
+              if(final_state_is_electron_muon || final_state_is_electron_electron)
+              {
+              if(event_selection_based_on_tight_cuts_particles(electron, event))
+                  
+              {
+                  std::cout<<"event "<< (ievt+1) <<" rejected due to no electron passing the tight cuts" <<std::endl;
+                  continue;
+              }
+              }
+              if(final_state_is_electron_muon || final_state_is_muon_muon)
+              {
+              if(event_selection_based_on_tight_cuts_particles(muon, event))
+                  
+              {
+                  std::cout<<"event "<< (ievt+1) <<" rejected due to no muon passing the tight cuts" <<std::endl;
+                  continue;
+              }
+              }
+          }
+          
+          if (want_to_select_event_based_on_loose_cuts_pass_matching_with_tight_cuts_pass)
+          {
+              if(final_state_is_electron_muon || final_state_is_electron_electron)
+              {
+              if(event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(electron, event))
+              {
+                  std::cout<<"event "<< (ievt+1) <<" rejected due to mismatch between loose cuts and tight cuts pass of electron" <<std::endl;
+                  continue;
+              }
+          }
+          if(final_state_is_electron_muon || final_state_is_muon_muon)
+          {
+
+              if(event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(muon, event))
+                  
+              {
+                  std::cout<<"event "<< (ievt+1) <<" rejected due to mismatch between loose cuts and tight cuts pass muon" <<std::endl;
+                  continue;
+              }
+          }
+          }
+
+          selected_event_number.push_back((ievt+1));
+         // std::cout<<"selected event is: "<<(ievt+1)<<std::endl;
+          total_number_of_selected_events++;
+      }*/
         
-        cTTM += mp->getTTM();
-        cEW1m += mp->getEW1M();
-        cEW2m += mp->getEW2M();
+ /*       std::cout<<"total number of selected events "<<total_number_of_selected_events<<std::endl;
         
-        emp = new ElectronMuon();
-        emp2e = new ElectronMuon();
-        emp2mu = new ElectronMuon();
-        emp->setData1(*epf1,*mpf1);
-        emp2e->setData2(*epf2);
-        emp2mu->setData3(*mpf2);
-        emp->fillHisto(hvem, 1);
-        emp2e->fillHisto(hvem2e, 2);
-        emp2mu->fillHisto(hvem2mu, 3);
-        
-        c1E1M += emp->getEW1E1M();
-        c2E += emp2e->getEW2E();
-        c2M += emp2mu->getEW2M();
-        
-        empOppChrg = new ElectronMuonOppChrg();
-        empOppChrg2e = new ElectronMuonOppChrg();
-        empOppChrg2mu = new ElectronMuonOppChrg();
-        empOppChrg->setData(*emp);
-        empOppChrg2e->setData(*emp2e);
-        empOppChrg2mu->setData(*emp2mu);
-        empOppChrg->fillHisto(hvemOppChrg, 1);
-        empOppChrg2e->fillHisto(hvemOppChrg2e, 2);
-        empOppChrg2mu->fillHisto(hvemOppChrg2mu, 3);
-        
-        cOppChrg1e1m += empOppChrg->getEWOppChrg();
-        cOppChrg2e += empOppChrg2e->getEWOppChrg();
-        cOppChrg2m += empOppChrg2mu->getEWOppChrg();
-        
-        empel = new ElectronMuonExtraLoose();
-        empel2e = new ElectronMuonExtraLoose();
-        empel2mu = new ElectronMuonExtraLoose();
-        empel->setData1(*empOppChrg,*ep,*mp);
-        empel2e->setData2(*empOppChrg2e,*ep);
-        empel2mu->setData3(*empOppChrg2mu,*mp);
-        empel->fillHisto(hvemel, 1);
-        empel2e->fillHisto(hvemel2e, 2);
-        empel2mu->fillHisto(hvemel2mu, 3);
-        
-        cExLoose1e1m += empel->getEWExLoose1e1m();
-        cExLoose2e += empel2e->getEWExLoose2e();
-        cExLoose2m += empel2mu->getEWExLoose2m();
-        
-        metp = new Met();
-        metp->setData(fname);
-        metpf = new Met(metp->selectData());
-        
-        cMetCut += metp->getEWMetCut();
-        
-        obpEMM = new ElectronMuonMet();
-        obpEMM2e = new ElectronMuonMet();
-        obpEMM2mu = new ElectronMuonMet();
-        obpEMM->setData(*empel,*metp);
-        obpEMM2e->setData(*empel2e,*metpf);
-        obpEMM2mu->setData(*empel2mu,*metpf);
-        obpEMM->fillHisto(hvEMM, 1);
-        obpEMM2e->fillHisto(hvEMM2e, 2);
-        obpEMM2mu->fillHisto(hvEMM2mu, 3);
-        
-        cEMuMet1e1m += obpEMM->getEMuMet();
-        cEMuMet2e += obpEMM2e->getEMuMet();
-        cEMuMet2m += obpEMM2mu->getEMuMet();
-       
-        delete ep;
-        delete epf1;
-        delete epf2;
-        delete mp;
-        delete mpf1;
-        delete mpf2;
-        delete emp;
-        delete emp2e;
-        delete emp2mu;
-        delete empOppChrg;
-        delete empOppChrg2e;
-        delete empOppChrg2mu;
-        delete empel;
-        delete empel2e;
-        delete empel2mu;
-        delete obpEMM;
-        delete obpEMM2e;
-        delete obpEMM2mu;
+        // close input file
+        inFile->Close();
     }
-        
-    cout<<"Total number of tight electrons: "<< cTTE <<endl;
-    cout<<"Total number of events having only one tight electron: "<< cEW1e <<endl;
-    cout<<"Total number of events having exactly two tight electrons: "<< cEW2e <<endl;
-    cout<<"Total number of tight muons: "<< cTTM << endl;
-    cout<<"Total number of events having only one tight muon: "<< cEW1m << endl;
-    cout<<"Total number of events having exactly two tight muons: "<< cEW2m <<endl;
-    cout<<"Total number of events having only one tight electron and only one tight muon: " << c1E1M <<endl;
-    cout<<"Total number of events having only two tight electrons: " << c2E <<endl;
-    cout<<"Total number of events having only two tight muons: " << c2M <<endl;
-    cout<<"Total number of events having ooposite charge leptons 1e1mu: " << cOppChrg1e1m <<endl;
-    cout<<"Total number of events having ooposite charge leptons 2e: " << cOppChrg2e <<endl;
-    cout<<"Total number of events having ooposite charge leptons 2mu: " << cOppChrg2m <<endl;
-    cout<<"total number of selected events due to extra loose cuts in 1e 1mu : "<<cExLoose1e1m<<endl;
-    cout<<"total number of selected events due to extra loose cuts in 2e : "<<cExLoose2e<<endl;
-    cout<<"total number of selected events due to extra loose cuts in 2mu : "<<cExLoose2m<<endl;
-    cout<<"Total number of Mets passing cuts: "<< cMetCut <<endl;
-    cout<<"total number of selected events due to met passing no cut 1e1mu :"<<cEMuMet1e1m<<endl;
-    cout<<"total number of selected events due to met passing cut 2e :"<<cEMuMet2e<<endl;
-    cout<<"total number of selected events due to met passing cut 2mu :"<<cEMuMet2m<<endl;
+      // break loop if maximal number of events is reached:
+      // this has to be done twice to stop the file loop as well
+      if(maxEvents_>0 ? ievt+1>maxEvents_ : false) break;
+  }
+    return 0;
+}*/
+/*
+int event_selection_based_on_vertex_cuts(edm::EventBase const & event)
+{
+    int iszero(std::vector<int>* );
+    std::vector<int>* cuts_of_vertices(edm::EventBase const & );
+    if ((iszero(cuts_of_vertices(event)))) return 1;//event not select or not pass
+    else return 0;//event select or pass
+}
 
+std::vector<int>* cuts_of_vertices(edm::EventBase const & event)
+{
+    std::vector<int>* serial_number_of_passed_vertices_in_event;
+    serial_number_of_passed_vertices_in_event = new std::vector<int> ;
+    
+    double Vtx_Cut_z = 24.0;
+    int Vtx_Cut_ndof = 4;
+    double Vtx_Cut_rho = 2.0;
+    
+    // Handle to the z of vertex
+    edm::Handle<std::vector<float> > vtxZ;
+    event.getByLabel(std::string("vertexInfo:z"), vtxZ);
+    // Handle to the dof of vertex
+    edm::Handle<std::vector<int> > dof;
+    event.getByLabel(std::string("vertexInfo:ndof"), dof);
+    // Handle to the rho
+    edm::Handle<std::vector<float> > rhoo;
+    event.getByLabel(std::string("vertexInfo:rho"), rhoo);
+    
+    // loop vertex collection and test cut and fill histogram of passed vertex fabs(VertexZ)
+    for(unsigned int i=0;i<(vtxZ->size());i++){
+        if((vtxZ)->at(i) < Vtx_Cut_z){
+            if((dof->at(i)) > Vtx_Cut_ndof){
+                if((rhoo)->at(i) < Vtx_Cut_rho){
+                    serial_number_of_passed_vertices_in_event->push_back((i+1));
+                }}}}
+   
+    return serial_number_of_passed_vertices_in_event;
+}
+
+int event_selection_based_on_only_opposite_charge_particles(int particle1, int particle2, edm::EventBase const & event)
+{
+    int isopposite(std::vector<void*>* , std::vector<void*>* );
+    std::vector<void*>* storing_charge_of_particle(int, edm::EventBase const & );
+    if(isopposite(storing_charge_of_particle(particle1, event), storing_charge_of_particle(particle2, event))) return 0; //if select or found opposite pair
+    return 1;//if not select or no opposite pair found
+}
+
+int isopposite(std::vector<void*>* c, std::vector<void*>* d){
+    std::vector<float>* a = (std::vector<float>*) (*c)[1];
+    std::vector<float>* b = (std::vector<float>*) (*d)[1];
+    for(unsigned int i=0; i<(a->size()); i++)
+    {
+        for(unsigned int j=0; j<(b->size()); j++)
+        {
+            if (((*a)[i] * (*b)[j]) < 0) return 1; //if isopposite or found opposite pair
+        }
+    }
     return 0;
 }
 
+int event_selection_based_on_tight_cuts_particles(int particle, edm::EventBase const & event)
+    {
+        int iszero(std::vector<int>* );
+        std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+        if ((iszero(collective_cuts(particle, 1, event)))) return 1;//event not select or not pass
+        else return 0;//event select or pass
+    }
+
+int iszero(std::vector<int>* a)
+{
+    if(a->size() == 0) return 1;
+    for(unsigned int i=0; i<(a->size()); i++)
+    {
+        if ((*a)[i] != 0) return 0;
+    }
+    return 1;
+}
+
+int event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(int particle, edm::EventBase const & event)
+{
+    int loose_cuts_pass_matching_with_tight_cuts_pass(int, edm::EventBase const & );
+    int iszero(std::vector<int>* );
+    std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+    if ((iszero(collective_cuts(particle, 1, event)))) return 1;//event not select
+    if(loose_cuts_pass_matching_with_tight_cuts_pass(particle, event)) return 0;//event select
+    return 1;//if not select or not matches
+}
+
+int loose_cuts_pass_matching_with_tight_cuts_pass(int particle, edm::EventBase const & event){
+#define loose 0
+#define tight 1
+    
+    int isequal(std::vector<int>* , std::vector<int>* );
+    std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+    if(isequal(collective_cuts(particle, loose, event), collective_cuts(particle, tight, event))) return 1; //if matches
+    else return 0;//if not matches
+}
+
+int isequal(std::vector<int>* a, std::vector<int>* b)
+{
+    if(a->size() != b->size()) return 0;
+    for(unsigned int i=0; i<(a->size()); i++)
+    {
+        if ((*a)[i] != (*b)[i]) return 0;
+    }
+    return 1;
+}*/
+
+                        
                         
 
 
