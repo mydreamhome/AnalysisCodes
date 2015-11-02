@@ -388,7 +388,7 @@ public:
         return;
     }
     
-    void printData(int p,char* msg)
+    void printData(int p,string msg)
     {
         vector<DATA>* dv;
         DATA d;
@@ -537,6 +537,7 @@ public:
                 d.tight.ptc = (d.pt > tMuon_Tight_Cut_pt)?true:false;
                 d.tight.etac = (fabs( d.eta ) < tMuon_Tight_Cut_eta)?true:false;
                 d.tight.isoc = (d.iso < tMuon_Relative_Isolation_Cut)?true:false;
+d.tight.all = d.tight.particleFlowc && d.tight.globalMuonc && d.tight.trackerMuonc && d.tight.ptc && d.tight.etac && d.tight.isoc;
 
                 d.loose.particleFlowc = (d.particleFlow == lParticle_Flow_Muon_Cut)?true:false;
                 d.loose.globalMuonc = (d.globalMuon == lGlobal_Muon_Cut)?true:false;
@@ -544,6 +545,7 @@ public:
                 d.loose.ptc = (d.pt > lMuon_Tight_Cut_pt)?true:false;
                 d.loose.etac = (fabs( d.eta ) < lMuon_Tight_Cut_eta)?true:false;
                 d.loose.isoc = (d.iso < lMuon_Relative_Isolation_Cut)?true:false;
+d.loose.all = d.loose.particleFlowc && d.loose.globalMuonc && d.loose.trackerMuonc && d.loose.ptc && d.loose.etac && d.loose.isoc;
             }
         }
         
@@ -555,6 +557,136 @@ public:
         delete v;
         v=0;
     }
+};
+
+class Met
+{
+    struct DATA
+    {
+        
+        float  pt;
+        bool   ptc;
+    };
+    
+    vector<vector<DATA>*>  v;
+    
+public:
+    Met()
+    {
+        
+    }
+    
+    void setData(const char* fname)
+    {
+        TFile* inFile = TFile::Open(fname);
+        
+        if(!inFile)
+        {
+            cout<<"Input Root File not open for processing\n";
+            return;
+        }
+        
+        fwlite::Event ev(inFile);
+        int evtID=0;
+        
+        for(ev.toBegin(); !ev.atEnd(); ++ev, evtID++)
+        {
+            edm::EventBase const & event = ev;
+            
+            edm::Handle<std::vector<float> > MetPt;
+            event.getByLabel(std::string("met:metPt"), MetPt);
+            
+            vector<DATA>* dv = new vector<DATA>;
+            DATA d;
+            
+            for(unsigned int i=0;i<MetPt->size();i++)
+            {
+                d.pt = MetPt->at(i);
+                
+                dv->push_back(d);
+                
+            }
+            
+            
+            v.push_back(dv);
+            
+        }
+        inFile->Close();
+        
+        setCuts();
+        
+        return;
+    }
+    
+    void printData(int p)
+    {
+        vector<DATA>* dv;
+        DATA d;
+        
+        for(unsigned int i=0; i < v.size(); i++)
+        {
+            dv=v.at(i);
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                if(p==1 || p==0) cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Pt:"<<d.pt<<endl;
+                
+                if(p==2||p==0)
+                    cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Ptc:"<<d.ptc<<endl;
+                if(d.ptc){
+                  if(p==3||p==0) cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Ptc:"<<d.ptc<<endl;
+                }
+            }
+        }
+        return;
+    }
+    
+    void fillHisto(const char* outputFile)
+    {
+        vector<DATA>* dv;
+        DATA d;
+        
+        fwlite::TFileService fs = fwlite::TFileService(outputFile);
+        TFileDirectory dir = fs.mkdir("analyzePatMuon");
+        TH1F* MetPt_  = dir.make<TH1F>("MetPt_"  , "pt"  ,   100,   0., 400.);
+        
+        for(unsigned int i=0; i < v.size(); i++)
+        {
+            dv=v.at(i);
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                if(d.ptc)
+                    MetPt_->Fill(d.pt);
+                
+            }
+            
+        }
+        return;
+    }
+    void setCuts()
+    {
+        
+        vector<DATA>* dv;
+        
+        
+        float Met_Cut_pt = 50.0;
+        
+        for(unsigned int i=0; i < v.size(); i++)
+        {
+            dv=v.at(i);
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                DATA& d=dv->at(j);
+                d.ptc = (d.pt > Met_Cut_pt)?true:false;
+                
+            }
+            
+            
+        }
+        return;
+    }
+    
 };
 
 int main(int argc, char* argv[])
