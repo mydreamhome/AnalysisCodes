@@ -70,13 +70,13 @@ public:
             for(unsigned int j=0;j<dv->size();j++)
             {
                 d=dv->at(j);
-               // if(p==1 || p==0) cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Pt:"<<d.pt<<endl;
+                if(p==1 || p==0) cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Pt:"<<d.pt<<endl;
                 
-                //if(p==2||p==0)
-                 //   cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Ptc:"<<d.ptc<<endl;
-              //  if(d.ptc){
-               //   if(p==3||p==0) cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Pt:"<<d.pt<<", Ptc:"<<d.ptc<<endl;
-               // }
+                if(p==2||p==0)
+                    cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Ptc:"<<d.ptc<<endl;
+                if(d.ptc){
+                  if(p==3||p==0) cout<<"Event ID:"<<i<<", Met ID:"<<j<<","<<" Ptc:"<<d.ptc<<endl;
+                }
             }
         }
         return;

@@ -28,7 +28,6 @@ using namespace std;
 #include "Electron.hh"
 #include "Muon.hh"
 #include "ElectronMuon.hh"
-#include "ElectronMuonExtraLoose.hh"
 
 #include "Met.hh"
 
@@ -54,53 +53,39 @@ public:
 		v = new vector<DATA>;
 	}
 
-    vector<DATA>* setData(ElectronMuonExtraLoose& emel, Met& met)
+    
+    void setData(ElectronMuon& em,Met& met)
     {
-        int rejected_met = 0;
-        for(unsigned int i=0;i<emel.v->size();i++)
+        for(unsigned int i=0;i<em.v->size();i++)
         {
-            int evtID=((emel.v)->at(i)).evtID;
+            int evtID=((em.v)->at(i)).evtID;
             vector<MetDATA>* dv = (vector<MetDATA>*) met.v.at(evtID);
-	 
+            
+	    
+	int metc=0;
+		
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                MetDATA metd =(MetDATA) dv->at(j);
+               if(metd.ptc==true)metc++;
+		// cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
+            }
+	  
+	   if(metc==2)
+		{
 	   for(unsigned int j=0;j<dv->size();j++)
             {
                 MetDATA metd =(MetDATA) dv->at(j);
                if(metd.ptc==true)
-                                {
-                                    DATA d ={evtID,metd.pt};
-                                    v->push_back(d);
-                                    cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
-                                }
-               else rejected_met++;
-            }
+		{
+			DATA d ={evtID,metd.pt};
+			v->push_back(d);
+ 		cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
+        	}     
+	}
+ 	}           
             
         }
-        cout<<"total number of rejected events due to no met passing cut"<<rejected_met<<endl;
-        return v;
-    }
-    
-    void fillHisto(const char* outputFile)
-    {
-      //  vector<DATA>* dv;
-        DATA d;
-        
-        fwlite::TFileService fs = fwlite::TFileService("met.root");
-        TFileDirectory dir = fs.mkdir("met");
-        TH1F* metPt_  = dir.make<TH1F>("metPt_"  , "pt"  ,   100,   0., 400.);
-        
-        for(unsigned int i=0; i < v->size(); i++)
-        {
-                d=v->at(i);
-                metPt_->Fill(d.metPt);
-            
-        }
-        return;
-    }
-    
-    ~ElectronMuonMet()
-    {
-        delete v;
-        v=0;
     }
 };
 
@@ -171,8 +156,7 @@ int main(int argc, char* argv[])
     ElectronMuon em;
     em.setData(obfe,obfm);
     
-    ElectronMuonExtraLoose emel;
-    emel.setData(em,obe,obm);
+    
     
     Met obmet;
     obmet.setData(inputFiles_[0].c_str());
@@ -183,9 +167,8 @@ int main(int argc, char* argv[])
     
     ElectronMuonMet obEMM;
     
-    obEMM.setData(emel,obmet);
-    obEMM.fillHisto(outputFile_.c_str());
-
+    obEMM.setData(em,obmet);
+    
     
     return 0;
     

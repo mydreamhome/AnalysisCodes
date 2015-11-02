@@ -1,5 +1,4 @@
 class ElectronMuon;
-class ElectronMuonExtraLoose;
 
 class Electron
 {
@@ -14,7 +13,7 @@ class Electron
         CUT    loose,tight;
     };
     
-    vector<vector<DATA>*>* v;
+    vector<vector<DATA>*>*  v;
     
 public:
     Electron()
@@ -23,6 +22,7 @@ public:
     }
     Electron(vector<vector<DATA>*>* uv)
     {
+        
         v=uv;
     }
     
@@ -32,7 +32,7 @@ public:
         
         if(!inFile)
         {
-            cout<<"Input Root File not opened for processing in electron class "<<endl;
+            cout<<"Input Root File not open in electron class for processing"<<endl;
             return;
         }
         
@@ -58,7 +58,7 @@ public:
             // Handle to the electron missing hits
             edm::Handle<std::vector<float> > electronmissHits;
             event.getByLabel(std::string("electrons:elmissHits"), electronmissHits);
-            // Handle to the electron isolation of cone of radius 0.03
+            // Handle to the electron isolation of cone of radius 0.04
             edm::Handle<std::vector<float> > electronIso03;
             event.getByLabel(std::string("electrons:elIso03"), electronIso03);
             // Handle to the electron charge
@@ -130,9 +130,6 @@ public:
         cout<<"Total electrons:"<<te<<" Total non empty events:"<<tevt<<endl;
         return;
     }
-    
-    
-    
     vector<vector<DATA>*>* selectData()
     {
         vector<DATA>* dv;
@@ -142,50 +139,60 @@ public:
         
         for(unsigned int i=0; i < v->size(); i++)
         {
-            int elctron_number = 0;
             vector<DATA>* fdv= new vector<DATA>;
             
             dv=v->at(i);
             
-            bool isEventSelected=false;
+            bool isEventSelected=true;
             int tightCount=0;
             
             for(unsigned int j=0;j<dv->size();j++)
             {
                 d=dv->at(j);
                 
-                if(d.tight.all)
+                if(d.tight.all)tightCount++;
+                
+                if(!(  (d.tight.all==true && d.loose.all==true)  || (d.tight.all==false && d.loose.all==false) ))
                 {
-                elctron_number = j;
-                  tightCount++;
+                    // cout<<i<<" Reject1\n";
+                    isEventSelected=false;
+                    break;
                 }
+                
             }
             
-            if(tightCount==1){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
+            if(tightCount==0){isEventSelected=false;//cout<<i<<" Reject2\n";
             }
             //-----------------------
             if(isEventSelected)
             {
-                    d=dv->at(elctron_number);
                 
-                        cout<<"Selected (on basis of only 1 tight electron) EventID: "<<i<<"  S ElectronID: "<<elctron_number<<endl;
+                for(unsigned int j=0;j<dv->size();j++)
+                {
+                    d=dv->at(j);
+                    
+                    
+                    if(d.tight.all==true && d.loose.all==true)
+                    {
+                        //cout<<"SEventID:"<<i<<"SElectronID:"<<j<<endl;
                         fdv->push_back(d);
-                    // only fill one tight electron's information
-
+                    }
+                    
+                }
+                
             }
             //-------------------------
             fv->push_back(fdv);
         }
         return fv;
     }
-    
     void fillHisto(const char* outputFile)
     {
         vector<DATA>* dv;
         DATA d;
         
-        fwlite::TFileService fs = fwlite::TFileService("tight_electron.root");
-        TFileDirectory dir = fs.mkdir("tight_electron");
+        fwlite::TFileService fs = fwlite::TFileService("E.root");
+        TFileDirectory dir = fs.mkdir("E");
         TH1F* electronPt_  = dir.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
         
         for(unsigned int i=0; i < v->size(); i++)
@@ -263,5 +270,4 @@ public:
     }
     
     friend class ElectronMuon;
-    friend class ElectronMuonExtraLoose;
 };

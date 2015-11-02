@@ -1,5 +1,4 @@
 class ElectronMuon;
-class ElectronMuonExtraLoose;
 
 class Muon
 {
@@ -138,35 +137,46 @@ public:
         
         for(unsigned int i=0; i < v->size(); i++)
         {
-            int muon_number = 0;
             vector<DATA>* fdv= new vector<DATA>;
             
             dv=v->at(i);
             
-            bool isEventSelected=false;
+            bool isEventSelected=true;
             int tightCount=0;
             
             for(unsigned int j=0;j<dv->size();j++)
             {
                 d=dv->at(j);
                 
-                if(d.tight.all)
+                if(d.tight.all)tightCount++;
+                
+                if(!(  (d.tight.all==true && d.loose.all==true)  || (d.tight.all==false && d.loose.all==false) ))
                 {
-                    muon_number = j;
-                  tightCount++;
+                    // cout<<i<<" Reject1\n";
+                    isEventSelected=false;
+                    break;
                 }
+                
             }
             
-            if(tightCount==1){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
+            if(tightCount==0){isEventSelected=false;//cout<<i<<" Reject2\n";
             }
             //-----------------------
             if(isEventSelected)
             {
-                    d=dv->at(muon_number);
+                
+                for(unsigned int j=0;j<dv->size();j++)
+                {
+                    d=dv->at(j);
                     
-                        cout<<"Selected (on basis of only 1 tight muon) EventID: "<<i<<"  S MuonID: "<<muon_number<<endl;
+                    
+                    if(d.tight.all==true && d.loose.all==true)
+                    {
+                        //cout<<"SEventID:"<<i<<"SElectronID:"<<j<<endl;
                         fdv->push_back(d);
-                        // only fill one tight muon's information
+                    }
+                    
+                }
                 
             }
             //-------------------------
@@ -180,8 +190,8 @@ public:
         vector<DATA>* dv;
         DATA d;
         
-        fwlite::TFileService fs = fwlite::TFileService("tight_muon.root");
-        TFileDirectory dir = fs.mkdir("tight_muon");
+        fwlite::TFileService fs = fwlite::TFileService(outputFile);
+        TFileDirectory dir = fs.mkdir("analyzePatMuon");
         TH1F* muonPt_  = dir.make<TH1F>("muonPt_"  , "pt"  ,   100,   0., 400.);
         
         for(unsigned int i=0; i < v->size(); i++)
@@ -255,6 +265,5 @@ public:
     }
     
     friend class ElectronMuon;
-    friend class ElectronMuonExtraLoose;
 };
 
