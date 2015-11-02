@@ -22,10 +22,88 @@
 
 #include "PhysicsTools/FWLite/interface/TFileService.h"
 #include "PhysicsTools/FWLite/interface/CommandLineParser.h"
+using namespace std;
 
 
-  TH1F* electronPt_;
-  TH1F* muonPt_;
+#include "Electron.hh"
+#include "Muon.hh"
+#include "ElectronMuon.hh"
+#include "ElectronMuonExtraLoose.hh"
+
+#include "Met.hh"
+
+class ElectronMuonMet
+{
+    struct MetDATA
+    {
+        
+        float  pt;
+        bool   ptc;
+    };
+
+	struct DATA{
+		int evtID;
+		float metPt;
+
+	};
+
+	vector<DATA>* v;
+public:
+	ElectronMuonMet()
+	{
+		v = new vector<DATA>;
+	}
+
+    vector<DATA>* setData(ElectronMuonExtraLoose& emel, Met& met)
+    {
+        int rejected_met = 0;
+        for(unsigned int i=0;i<emel.v->size();i++)
+        {
+            int evtID=((emel.v)->at(i)).evtID;
+            vector<MetDATA>* dv = (vector<MetDATA>*) met.v.at(evtID);
+	 
+	   for(unsigned int j=0;j<dv->size();j++)
+            {
+                MetDATA metd =(MetDATA) dv->at(j);
+               if(metd.ptc==true)
+                                {
+                                    DATA d ={evtID,metd.pt};
+                                    v->push_back(d);
+                                    cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
+                                }
+               else rejected_met++;
+            }
+            
+        }
+        cout<<"total number of rejected events due to no met passing cut"<<rejected_met<<endl;
+        return v;
+    }
+    
+    void fillHisto(const char* outputFile)
+    {
+      //  vector<DATA>* dv;
+        DATA d;
+        
+        fwlite::TFileService fs = fwlite::TFileService("met.root");
+        TFileDirectory dir = fs.mkdir("met");
+        TH1F* metPt_  = dir.make<TH1F>("metPt_"  , "pt"  ,   100,   0., 400.);
+        
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+                d=v->at(i);
+                metPt_->Fill(d.metPt);
+            
+        }
+        return;
+    }
+    
+    ~ElectronMuonMet()
+    {
+        delete v;
+        v=0;
+    }
+};
+
 int main(int argc, char* argv[])
 {
   // ----------------------------------------------------------------------
@@ -44,42 +122,78 @@ int main(int argc, char* argv[])
     optutl::CommandLineParser parser ("Analyze FWLite Histograms");
 
   // set defaults
-  parser.integerValue ("maxEvents"  ) = 1000;
-  parser.integerValue ("outputEvery") =   10;
+ // parser.integerValue ("maxEvents"  ) = 1000;
+//  parser.integerValue ("outputEvery") =   10;
   parser.stringValue  ("outputFile" ) = "analyzeEdmTuple.root";
 
   // parse arguments
   parser.parseArguments (argc, argv);
-  int maxEvents_ = parser.integerValue("maxEvents");
-  unsigned int outputEvery_ = parser.integerValue("outputEvery");
+ // int maxEvents_ = parser.integerValue("maxEvents");
+  //unsigned int outputEvery_ = parser.integerValue("outputEvery");
   std::string outputFile_ = parser.stringValue("outputFile");
   std::vector<std::string> inputFiles_ = parser.stringVector("inputFiles");
 
   // book a set of histograms
     fwlite::TFileService fs = fwlite::TFileService(outputFile_.c_str());
     TFileDirectory dir = fs.mkdir("analyzePatMuon");
-    electronPt_  = dir.make<TH1F>("electronPt"  , "pt"  ,   100,   0., 300.);
-    muonPt_  = dir.make<TH1F>("muonPt"  , "pt"  ,   100,   0., 300.);
+
  // TH1F* muonEta_ = dir.make<TH1F>("muonEta" , "eta" ,   100,  -3.,   3.);
  // TH1F* muonPhi_ = dir.make<TH1F>("muonPhi" , "phi" ,   100,  -5.,   5.);
 
-    std::cout<<"selected events are:"<<std::endl;
-
   // loop the events
-  int ievt=0;  
-  for(unsigned int iFile=0; iFile<inputFiles_.size(); ++iFile){
-    // open input file (can be located on castor)
-    TFile* inFile = TFile::Open(inputFiles_[iFile].c_str());
-    if( inFile ){
-      // ----------------------------------------------------------------------
-      // Second Part: 
-      //
-      //  * loop the events in the input file 
-      //  * receive the collections of interest via fwlite::Handle
-      //  * fill the histograms
-      //  * after the loop close the input file
-      // ----------------------------------------------------------------------      
-    int total_number_of_selected_events =0;
+ // int ievt=0;  
+
+    Electron obe;
+    
+
+    obe.setData(inputFiles_[0].c_str());
+    obe.fillHisto(outputFile_.c_str());
+    
+   //obe.printData(0,"Primary Events information.");
+    
+    
+    
+    Electron obfe(obe.selectData());
+ 
+    //obfe.printData(0,"Filltered Events information.");
+    
+    
+    Muon obm;
+    obm.setData(inputFiles_[0].c_str());
+    obm.fillHisto(outputFile_.c_str());
+    
+   // obm.printData(0,"Primary Events information for MUON.");
+    
+    
+    Muon obfm(obm.selectData());
+    //obfm.printData(0,"Filltered Events information for MUON.");
+    
+    ElectronMuon em;
+    em.setData(obfe,obfm);
+    
+    ElectronMuonExtraLoose emel;
+    emel.setData(em,obe,obm);
+    
+    Met obmet;
+    obmet.setData(inputFiles_[0].c_str());
+   // obmet.fillHisto(outputFile_.c_str());
+    
+    obmet.printData(0);
+    
+    
+    ElectronMuonMet obEMM;
+    
+    obEMM.setData(emel,obmet);
+    obEMM.fillHisto(outputFile_.c_str());
+
+    
+    return 0;
+    
+    ////////////////
+}
+/*
+
+        int total_number_of_selected_events =0;
         std::vector<int> selected_event_number;
    
         bool final_state_is_electron_muon = true;
@@ -103,16 +217,13 @@ int main(int argc, char* argv[])
         int event_selection_based_on_tight_cuts_particles(int, edm::EventBase const & );
         int event_selection_based_on_vertex_cuts(edm::EventBase const & );
         
-
-      fwlite::Event ev(inFile);
-      for(ev.toBegin(); !ev.atEnd(); ++ev, ++ievt){
-	edm::EventBase const & event = ev;
+        
 	// break loop if maximal number of events is reached 
 	if(maxEvents_>0 ? ievt+1>maxEvents_ : false) break;
 	// simple event counter
 	if(outputEvery_!=0 ? (ievt>0 && ievt%outputEvery_==0) : false) 
 	  std::cout << "  processing event: " << (ievt+1) << std::endl;
-          
+        std::cout << " event number : " << (ievt+1) << std::endl;  
 #define electron 11
 #define muon 13
 #define loose 0
@@ -130,7 +241,7 @@ int main(int argc, char* argv[])
                           std::vector<float>* a = collective_cuts_pt(electron, tight, event);
                           for(unsigned int i=0; i<a->size(); i++)
                           {
-                              electronPt_ ->Fill((*a)[i]);
+                             // electronPt_ ->Fill((*a)[i]);
                           }
                       }
                   }
@@ -144,7 +255,7 @@ int main(int argc, char* argv[])
                           {
                           for(unsigned int i=0; i<a->size(); i++)
                           {
-                              electronPt_ ->Fill((*a)[i]);
+                             // electronPt_ ->Fill((*a)[i]);
                           }
                           }
                       }
@@ -157,10 +268,10 @@ int main(int argc, char* argv[])
                       if(event_selection_based_on_tight_cuts_particles(muon, event) == 0)
                       {
                           // fill muon pt here
-                          std::vector<float>* b = collective_cuts_pt(electron, tight, event);
+                          std::vector<float>* b = collective_cuts_pt(muon, tight, event);
                           for(unsigned int i=0; i<b->size(); i++)
                           {
-                              muonPt_ ->Fill((*b)[i]);
+                             // muonPt_ ->Fill((*b)[i]);
                           }
                       }
                   }
@@ -174,7 +285,7 @@ int main(int argc, char* argv[])
                           {
                               for(unsigned int i=0; i<b->size(); i++)
                               {
-                                  muonPt_ ->Fill((*b)[i]);
+                                //  muonPt_ ->Fill((*b)[i]);
                               }
                           }
                       }
@@ -267,11 +378,11 @@ int main(int argc, char* argv[])
           }
 
           selected_event_number.push_back((ievt+1));
-          std::cout<<"selected event is: "<<(ievt+1)<<std::endl;
+         // std::cout<<"selected event is: "<<(ievt+1)<<std::endl;
           total_number_of_selected_events++;
-      }
+      }*/
         
-        std::cout<<"total number of selected events "<<total_number_of_selected_events<<std::endl;
+ /*       std::cout<<"total number of selected events "<<total_number_of_selected_events<<std::endl;
         
         // close input file
         inFile->Close();
@@ -281,26 +392,8 @@ int main(int argc, char* argv[])
       if(maxEvents_>0 ? ievt+1>maxEvents_ : false) break;
   }
     return 0;
-}
-
-std::vector<float>* collective_cuts_pt(int particle, int type_of_cut, edm::EventBase const & event)
-{
-    std::vector<void*>* electronCuts(int, edm::EventBase const & );
-    std::vector<void*>* muonCuts(int, edm::EventBase const & );
-    
-    if(particle == 11){
-        std::vector<void*>* e = electronCuts(type_of_cut, event);
-        std::vector<float>* pt_of_passed_particle_in_event = (std::vector<float>*) (*e)[1];
-        return pt_of_passed_particle_in_event;
-    }
-    if(particle == 13){
-        std::vector<void*>* m = muonCuts(type_of_cut, event);
-        std::vector<float>* pt_of_passed_particle_in_event = (std::vector<float>*) (*m)[1];
-        return pt_of_passed_particle_in_event;
-    }
-    return 0;
-}
-
+}*/
+/*
 int event_selection_based_on_vertex_cuts(edm::EventBase const & event)
 {
     int iszero(std::vector<int>* );
@@ -329,20 +422,13 @@ std::vector<int>* cuts_of_vertices(edm::EventBase const & event)
     event.getByLabel(std::string("vertexInfo:rho"), rhoo);
     
     // loop vertex collection and test cut and fill histogram of passed vertex fabs(VertexZ)
-    int i = 0;
-    
-    for(std::vector<float>::const_iterator zz=vtxZ->begin(); zz!=vtxZ->end(); ++zz){
-        i++;
-        if( fabs(*zz) < Vtx_Cut_z){
-            for(std::vector<int>::const_iterator df=dof->begin(); df!=dof->end(); ++df){
-                if( (*df) > Vtx_Cut_ndof){
-                    for(std::vector<float>::const_iterator ro=rhoo->begin(); ro!=rhoo->end(); ++ro){
-                        if( (*ro) < Vtx_Cut_rho){
-                            serial_number_of_passed_vertices_in_event->push_back(i);
-                 
-                        }}
-                }}
-        }}
+    for(unsigned int i=0;i<(vtxZ->size());i++){
+        if((vtxZ)->at(i) < Vtx_Cut_z){
+            if((dof->at(i)) > Vtx_Cut_ndof){
+                if((rhoo)->at(i) < Vtx_Cut_rho){
+                    serial_number_of_passed_vertices_in_event->push_back((i+1));
+                }}}}
+   
     return serial_number_of_passed_vertices_in_event;
 }
 
@@ -367,45 +453,6 @@ int isopposite(std::vector<void*>* c, std::vector<void*>* d){
     return 0;
 }
 
-std::vector<void*>* storing_charge_of_particle(int particle, edm::EventBase const & event)
-    {
-        std::vector<void*>* pointer_to_arrays;
-        std::vector<int>* serial_number_of_particle_stoted_in_event;
-        std::vector<float>* charge_of_particle_in_event;
-        
-        pointer_to_arrays = new std::vector<void*> ;
-        serial_number_of_particle_stoted_in_event = new std::vector<int> ;
-        charge_of_particle_in_event = new std::vector<float> ;
-        
-        // Handle to the electron charge
-        edm::Handle<std::vector<float> > electronCharge;
-        event.getByLabel(std::string("electrons:elCharge"), electronCharge);
-        // Handle to the muon charge
-        edm::Handle<std::vector<float> > muonCharge;
-        event.getByLabel(std::string("muons:muCharge"), muonCharge);
-
-        // loop electron, muon collection and fill histogram of electrons and muons charge and tell index number of electrons and muons
-        int i = 0;
-        
-        if(particle == 11){
-        for(std::vector<float>::const_iterator charge=electronCharge->begin(); charge!=electronCharge->end(); ++charge){
-            i++;
-            serial_number_of_particle_stoted_in_event->push_back(i);
-            charge_of_particle_in_event->push_back(*charge);
-        }}
-        
-        if(particle == 13){
-            for(std::vector<float>::const_iterator charge=muonCharge->begin(); charge!=muonCharge->end(); ++charge){
-                i++;
-                serial_number_of_particle_stoted_in_event->push_back(i);
-                charge_of_particle_in_event->push_back(*charge);
-            }}
-        pointer_to_arrays->push_back(serial_number_of_particle_stoted_in_event);
-        pointer_to_arrays->push_back(charge_of_particle_in_event);
-        
-        return pointer_to_arrays;
-    }   
-  
 int event_selection_based_on_tight_cuts_particles(int particle, edm::EventBase const & event)
     {
         int iszero(std::vector<int>* );
@@ -413,15 +460,17 @@ int event_selection_based_on_tight_cuts_particles(int particle, edm::EventBase c
         if ((iszero(collective_cuts(particle, 1, event)))) return 1;//event not select or not pass
         else return 0;//event select or pass
     }
+
 int iszero(std::vector<int>* a)
+{
+    if(a->size() == 0) return 1;
+    for(unsigned int i=0; i<(a->size()); i++)
     {
-        for(unsigned int i=0; i<(a->size()); i++)
-        {
-            if ((*a)[i] != 0) return 0;
-        }
-        return 1;
+        if ((*a)[i] != 0) return 0;
     }
-   
+    return 1;
+}
+
 int event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(int particle, edm::EventBase const & event)
 {
     int loose_cuts_pass_matching_with_tight_cuts_pass(int, edm::EventBase const & );
@@ -450,203 +499,9 @@ int isequal(std::vector<int>* a, std::vector<int>* b)
         if ((*a)[i] != (*b)[i]) return 0;
     }
     return 1;
-}
+}*/
 
-std::vector<int>* collective_cuts(int particle, int type_of_cut, edm::EventBase const & event)
-{
-    std::vector<void*>* electronCuts(int, edm::EventBase const & );
-    std::vector<void*>* muonCuts(int, edm::EventBase const & );
-
-    if(particle == 11){
-        std::vector<void*>* e = electronCuts(type_of_cut, event);
-        std::vector<int>* serial_number_of_passed_particle_in_event = (std::vector<int>*) (*e)[0];
-        return serial_number_of_passed_particle_in_event;
-    }
-    if(particle == 13){
-        std::vector<void*>* m = muonCuts(type_of_cut, event);
-        std::vector<int>* serial_number_of_passed_particle_in_event = (std::vector<int>*) (*m)[0];
-        return serial_number_of_passed_particle_in_event;
-    }
-    return 0;
-}
-
-std::vector<void*>* electronCuts(int type_of_cut, edm::EventBase const & event)
-{
-    std::vector<void*>* pointer_to_arrays;
-    std::vector<int>* serial_number_of_passed_particle_in_event;
-    std::vector<float>* pt_of_passed_particle_in_event;
-    
-    pointer_to_arrays = new std::vector<void*> ;
-    serial_number_of_passed_particle_in_event = new std::vector<int> ;
-    pt_of_passed_particle_in_event = new std::vector<float> ;
-    
-    double Electron_Cut_pt = 0.0;
-    double Electron_Cut_eta = 0.0;
-    double Transverse_Impact_Parameter_Cut = 0.0;
-    int Passing_Conversion_Veto_Electron_Cut = 0;
-    
-    int Electron_Missing_Hits_Cut = 0;
-    double Electron_Relative_Isolation_Cut = 0.0;
-    
-    if(type_of_cut == 1)
-    {
-         Electron_Cut_pt = 20.0;
-         Electron_Cut_eta = 2.5;
-         Transverse_Impact_Parameter_Cut = 0.04;
-         Passing_Conversion_Veto_Electron_Cut = 1;
-        
-         Electron_Missing_Hits_Cut = 0;
-         Electron_Relative_Isolation_Cut = 0.15;
-    }
-    if(type_of_cut == 0)
-    {
-        Electron_Cut_pt = 10.0;
-        Electron_Cut_eta = 2.5;
-        Transverse_Impact_Parameter_Cut = 0.04;
-        Passing_Conversion_Veto_Electron_Cut = 1;
-        
-        Electron_Missing_Hits_Cut = 0;
-        Electron_Relative_Isolation_Cut = 0.15;
-    }
-    // Handle to the electron pt
-    edm::Handle<std::vector<float> > electronPt;
-    event.getByLabel(std::string("electrons:elPt"), electronPt);
-    // Handle to the electron eta
-    edm::Handle<std::vector<float> > electronEta;
-    event.getByLabel(std::string("electrons:elEta"), electronEta);
-    // Handle to the electron pt
-    edm::Handle<std::vector<float> > electronDxy;
-    event.getByLabel(std::string("electrons:elDxy"), electronDxy);
-    // Handle to the electron pt
-    edm::Handle<std::vector<float> > electronisVeto;
-    event.getByLabel(std::string("electrons:elisVeto"), electronisVeto);
-    // Handle to the electron pt
-    edm::Handle<std::vector<float> > electronmissHits;
-    event.getByLabel(std::string("electrons:elmissHits"), electronmissHits);
-    // Handle to the electron pt
-    edm::Handle<std::vector<float> > electronIso03;
-    event.getByLabel(std::string("electrons:elIso03"), electronIso03);
-    
-    // loop electron collection and test cut and fill histogram of passed electrons pt and tell index number of passed electrons
-    int i = 0;
-    
-    for(std::vector<float>::const_iterator pt=electronPt->begin(); pt!=electronPt->end(); ++pt){
-        i++;
-        if( (*pt) > Electron_Cut_pt){
-            // electronPt_ ->Fill( *pt );
-            for(std::vector<float>::const_iterator eta=electronEta->begin(); eta!=electronEta->end(); ++eta){
-                if( (*eta) < Electron_Cut_eta){
-                    //  electronEta_ ->Fill( *eta );
-                    for(std::vector<float>::const_iterator Dxy=electronDxy->begin(); Dxy!=electronDxy->end(); ++Dxy){
-                        if( (*Dxy) < Transverse_Impact_Parameter_Cut){
-                            // electronDxy_ ->Fill( *Dxy );
-                            for(std::vector<float>::const_iterator isVeto=electronisVeto->begin(); isVeto!=electronisVeto->end(); ++isVeto){
-                                if( (*isVeto) == Passing_Conversion_Veto_Electron_Cut){
-                                    // electronisVeto_ ->Fill( *isVeto );
-                                    for(std::vector<float>::const_iterator missHits=electronmissHits->begin(); missHits!=electronmissHits->end(); ++missHits){
-                                        if( (*missHits) == Electron_Missing_Hits_Cut){
-                                            // electronmissHits_ ->Fill( *missHits );
-                                            for(std::vector<float>::const_iterator Iso03=electronIso03->begin(); Iso03!=electronIso03->end(); ++Iso03){
-                                                if( (*Iso03) < Electron_Relative_Isolation_Cut){
-                                                    serial_number_of_passed_particle_in_event->push_back(i);
-                                                    pt_of_passed_particle_in_event->push_back(*pt);
-                                                    // electronPt_ ->Fill( *pt );
-
-                                                }}
-                                        }}
-                                }}
-                        }}
-                }}
-        }}
-    pointer_to_arrays->push_back(serial_number_of_passed_particle_in_event);
-    pointer_to_arrays->push_back(pt_of_passed_particle_in_event);
-    
-    return pointer_to_arrays;
-}
-
-std::vector<void*>* muonCuts(int type_of_cut, edm::EventBase const & event){
-    std::vector<void*>* pointer_to_arrays;
-    std::vector<int>* serial_number_of_passed_particle_in_event;
-    std::vector<float>* pt_of_passed_particle_in_event;
-
-    pointer_to_arrays = new std::vector<void*> ;
-    serial_number_of_passed_particle_in_event = new std::vector<int>() ;
-    pt_of_passed_particle_in_event = new std::vector<float> ;
-    
-    int Particle_Flow_Muon_Cut = 0;
-    int Global_Muon_Cut = 0;
-    int Tracker_Muon_Cut = 0;
-    double Muon_Tight_Cut_pt = 0.0;
-    double Muon_Tight_Cut_eta = 0.0;
-    double Muon_Relative_Isolation_Cut = 0.0;
-    
-    if(type_of_cut == 1)
-    {
-         Particle_Flow_Muon_Cut = 1;
-         Global_Muon_Cut = 1;
-         Tracker_Muon_Cut = 1;
-         Muon_Tight_Cut_pt = 20.0;
-         Muon_Tight_Cut_eta = 2.4;
-         Muon_Relative_Isolation_Cut = 0.20;
-    }
-    if(type_of_cut == 0)
-    {
-        Particle_Flow_Muon_Cut = 1;
-        Global_Muon_Cut = 1;
-        Tracker_Muon_Cut = 1;
-        Muon_Tight_Cut_pt = 10.0;
-        Muon_Tight_Cut_eta = 2.5;
-        Muon_Relative_Isolation_Cut = 0.20;
-    }
-    // Handle to the muon ParticleFlow
-    edm::Handle<std::vector<float> > ParticleFlow;
-    event.getByLabel(std::string("muons:muIsPFMuon"), ParticleFlow);
-    // Handle to the muon GlobalMuon
-    edm::Handle<std::vector<float> > GlobalMuon;
-    event.getByLabel(std::string("muons:muIsGlobalMuon"), GlobalMuon);
-    // Handle to the muon TrackerMuon
-    edm::Handle<std::vector<float> > TrackerMuon;
-    event.getByLabel(std::string("muons:muIsTrackerMuon"), TrackerMuon);
-    // Handle to the muon muonPt
-    edm::Handle<std::vector<float> > muonPt;
-    event.getByLabel(std::string("muons:muPt"), muonPt);
-    // Handle to the muon muonEta
-    edm::Handle<std::vector<float> > muonEta;
-    event.getByLabel(std::string("muons:muEta"), muonEta);
-    // Handle to the muon muonIso04
-    edm::Handle<std::vector<float> > muonIso04;
-    event.getByLabel(std::string("muons:muIso04"), muonIso04);
-    
-    // loop muon collection and test cut and fill histogram of passed muons pt and tell index number of passed muons
-    int i = 0;
-    
-    for(std::vector<float>::const_iterator pf=ParticleFlow->begin(); pf!=ParticleFlow->end(); ++pf){
-        i++;
-        if( (*pf) == Particle_Flow_Muon_Cut){
-            for(std::vector<float>::const_iterator gm=GlobalMuon->begin(); gm!=GlobalMuon->end(); ++gm){
-                if( (*gm) == Global_Muon_Cut){
-                    for(std::vector<float>::const_iterator tm=TrackerMuon->begin(); tm!=TrackerMuon->end(); ++tm){
-                        if( (*tm) == Tracker_Muon_Cut){
-                            for(std::vector<float>::const_iterator pt=muonPt->begin(); pt!=muonPt->end(); ++pt){
-                                if( (*pt) > Muon_Tight_Cut_pt){
-                                    for(std::vector<float>::const_iterator eta=muonEta->begin(); eta!=muonEta->end(); ++eta){
-                                        if( (*eta) < Muon_Tight_Cut_eta){
-                                            for(std::vector<float>::const_iterator Iso04=muonIso04->begin(); Iso04!=muonIso04->end(); ++Iso04){
-                                                if( (*Iso04) < Muon_Relative_Isolation_Cut){
-                                                    serial_number_of_passed_particle_in_event->push_back(i);
-                                                    pt_of_passed_particle_in_event->push_back(*pt);
-                                                   // muonPt_ ->Fill( *pt );
-                                                }}
-                                        }}
-                                }}
-                        }}
-                }}
-        }}
-    pointer_to_arrays->push_back(serial_number_of_passed_particle_in_event);
-    pointer_to_arrays->push_back(pt_of_passed_particle_in_event);
-    
-    return pointer_to_arrays;
-}
-
+                        
+                        
 
 

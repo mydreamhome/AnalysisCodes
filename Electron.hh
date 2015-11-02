@@ -5,12 +5,12 @@ class Electron
 {
     struct CUT
     {
-        bool   etac,ptc,dxyc,vetoc,mhitsc,isoc,scEtac,fullSigmaEtaEtac,dEtaInc,dPhiInc,HoverEc,ooEmooPc,d0c,dzc,all;
+        bool   etac,ptc,dxyc,vetoc,mhitsc,isoc,all;
     };
     struct DATA
     {
         
-        float  eID,phi,eta,pt,dxy,veto,mhits,iso,charge,scEta,fullSigmaEtaEta,dEtaIn,dPhiIn,HoverE,ooEmooP,d0,dz;
+        float  eta,pt,dxy,veto,mhits,iso,charge;
         CUT    loose,tight;
     };
     
@@ -49,9 +49,6 @@ public:
             // Handle to the electron eta
             edm::Handle<std::vector<float> > electronEta;
             event.getByLabel(std::string("electrons:elEta"), electronEta);
-            // Handle to the electron eta
-            edm::Handle<std::vector<float> > electronPhi;
-            event.getByLabel(std::string("electrons:elPhi"), electronPhi);
             // Handle to the electron impact parameter
             edm::Handle<std::vector<float> > electronDxy;
             event.getByLabel(std::string("electrons:elDxy"), electronDxy);
@@ -69,54 +66,18 @@ public:
             event.getByLabel(std::string("electrons:elCharge"), electronCharge);
             
             
-            // Handle to the electron electronSCeta
-            edm::Handle<std::vector<float> > electronSCeta;
-            event.getByLabel(std::string("electrons:elscEta"), electronSCeta);
-            // Handle to the electron electronfullSigmaEtaEta
-            edm::Handle<std::vector<float> > electronfullSigmaEtaEta;
-            event.getByLabel(std::string("electrons:elfull5x5siee"), electronfullSigmaEtaEta);
-            // Handle to the electron electrondEtaIn
-            edm::Handle<std::vector<float> > electrondEtaIn;
-            event.getByLabel(std::string("electrons:eldEtaIn"), electrondEtaIn);
-            // Handle to the electron electrondPhiIn
-            edm::Handle<std::vector<float> > electrondPhiIn;
-            event.getByLabel(std::string("electrons:eldPhiIn"), electrondPhiIn);
-            // Handle to the electron electronHOverE
-            edm::Handle<std::vector<float> > electronHOverE;
-            event.getByLabel(std::string("electrons:elHoE"), electronHOverE);
-            // Handle to the electron electronooEmooP
-            edm::Handle<std::vector<float> > electronooEmooP;
-            event.getByLabel(std::string("electrons:elooEmooP"), electronooEmooP);
-            // Handle to the electron electronD0
-            edm::Handle<std::vector<float> > electronD0;
-            event.getByLabel(std::string("electrons:elD0"), electronD0);
-            // Handle to the electron electronDz
-            edm::Handle<std::vector<float> > electronDz;
-            event.getByLabel(std::string("electrons:elDz"), electronDz);
-            
             vector<DATA>* dv = new vector<DATA>;
             DATA d;
-
+            
             for(unsigned int i=0;i<electronPt->size();i++)
             {
-                d.eID = i;
                 d.pt = electronPt->at(i);
                 d.eta = electronEta->at(i);
-                d.phi = electronPhi->at(i);
                 d.dxy = electronDxy->at(i);
                 d.veto = electronisVeto->at(i);
                 d.mhits = electronmissHits->at(i);
                 d.iso  = electronIso03->at(i);
                 d.charge = electronCharge->at(i);
-                
-                d.scEta = electronSCeta->at(i);
-                d.fullSigmaEtaEta = electronfullSigmaEtaEta->at(i);
-                d.dEtaIn = electrondEtaIn->at(i);
-                d.dPhiIn = electrondPhiIn->at(i);
-                d.HoverE = electronHOverE->at(i);
-                d.ooEmooP = electronooEmooP->at(i);
-                d.d0 = electronD0->at(i);
-                d.dz = electronDz->at(i);
                 
                 dv->push_back(d);
                 
@@ -172,15 +133,13 @@ public:
     
     
     
-    vector<vector<DATA>*>* selectData1()
+    vector<vector<DATA>*>* selectData()
     {
         vector<DATA>* dv;
         DATA d;
         
         vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
-        int events =0;
-        int totalTightelectrons =0;
-
+        
         for(unsigned int i=0; i < v->size(); i++)
         {
             int elctron_number = 0;
@@ -197,7 +156,6 @@ public:
                 
                 if(d.tight.all)
                 {
-                    totalTightelectrons++;
                 elctron_number = j;
                   tightCount++;
                 }
@@ -208,10 +166,9 @@ public:
             //-----------------------
             if(isEventSelected)
             {
-                events++;
                     d=dv->at(elctron_number);
                 
-                      //  cout<<"Selected (on basis of only 1 tight electron) EventID: "<<i<<"  S ElectronID: "<<elctron_number<<endl;
+                        cout<<"Selected (on basis of only 1 tight electron) EventID: "<<i<<"  S ElectronID: "<<elctron_number<<endl;
                         fdv->push_back(d);
                     // only fill one tight electron's information
 
@@ -219,64 +176,6 @@ public:
             //-------------------------
             fv->push_back(fdv);
         }
-        cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
-        cout<<"Total number of events having only one tight electron: "<< events <<endl;
-        return fv;
-    }
- 
-    vector<vector<DATA>*>* selectData2()
-    {
-        vector<DATA>* dv;
-        DATA d;
-        
-        vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
-        int events =0;
-        int totalTightelectrons =0;
-        
-        for(unsigned int i=0; i < v->size(); i++)
-        {
-            int elctron_number1 = 0;
-            int elctron_number2 = 0;
-
-            vector<DATA>* fdv= new vector<DATA>;
-            
-            dv=v->at(i);
-            
-            bool isEventSelected=false;
-            int tightCount=0;
-            
-            for(unsigned int j=0;j<dv->size();j++)
-            {
-                d=dv->at(j);
-                
-                if(d.tight.all)
-                {
-                    totalTightelectrons++;
-                    if(tightCount==0) elctron_number1 = j;
-                    if(tightCount==1) elctron_number2 = j;
-                    tightCount++;
-                }
-            }
-            
-            if(tightCount==2){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
-            }
-            //-----------------------
-            if(isEventSelected)
-            {
-                events++;
-                d=dv->at(elctron_number1);
-                fdv->push_back(d);
-                d=dv->at(elctron_number2);
-                //  cout<<"Selected (on basis of only 1 tight electron) EventID: "<<i<<"  S ElectronID: "<<elctron_number<<endl;
-                fdv->push_back(d);
-                // only fill one tight electron's information
-                
-            }
-            //-------------------------
-            fv->push_back(fdv);
-        }
-       // cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
-        cout<<"Total number of events having exactly two tight electrons: "<< events <<endl;
         return fv;
     }
     
@@ -288,33 +187,19 @@ public:
         fwlite::TFileService fs = fwlite::TFileService("tight_electron.root");
         TFileDirectory dir = fs.mkdir("tight_electron");
         TH1F* electronPt_  = dir.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* exactlyOneelectronPt_  = dir.make<TH1F>("exactlyOneelectronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* exactlyOneelectronEta_  = dir.make<TH1F>("exactlyOneelectronEta_"  , "eta"  ,   100,   -3.0, 3.0);
-        TH1F* exactlyOneelectronPhi_  = dir.make<TH1F>("exactlyOneelectronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
-
+        
         for(unsigned int i=0; i < v->size(); i++)
         {
             dv=v->at(i);
-            int tightCount=0;
-            int elctron_number = 0;
             for(unsigned int j=0;j<dv->size();j++)
             {
                 d=dv->at(j);
                 if(d.tight.all)
-                {
                     electronPt_->Fill(d.pt);
-                    elctron_number = j;
-                    tightCount++;
-                }
                 
             }
-            if(tightCount==1)
-            {
-                 d=dv->at(elctron_number);
-                exactlyOneelectronPt_->Fill(d.pt);
-                exactlyOneelectronEta_->Fill(d.eta);
-                exactlyOneelectronPhi_->Fill(d.phi);
-            }
+            
+            
         }
         return;
     }
@@ -323,6 +208,7 @@ public:
         
         vector<DATA>* dv;
         
+        
         float tElectron_Cut_pt = 20.0;
         float tElectron_Cut_eta = 2.5;
         float tTransverse_Impact_Parameter_Cut = 0.04;
@@ -330,7 +216,9 @@ public:
         
         float tElectron_Missing_Hits_Cut = 0;
         float tElectron_Relative_Isolation_Cut = 0.15;
- 
+        
+        
+        
         float lElectron_Cut_pt = 10.0;
         float lElectron_Cut_eta = 2.5;
         float lTransverse_Impact_Parameter_Cut = 0.04;
@@ -338,40 +226,6 @@ public:
         
         float lElectron_Missing_Hits_Cut = 0;
         float lElectron_Relative_Isolation_Cut = 0.15;
-        
-        float bscEta = 1.479;
-        float btfullSigmaEtaEta = 0.0101;
-        float btdEtaIn = 0.0095;
-        float btdPhiIn = 0.0291;
-        float btHoverE = 0.0372;
-        float btooEmooP = 0.0174;
-        float btd0 = 0.0144;
-        float btdz = 0.323;
-
-        float blfullSigmaEtaEta = 0.0105;
-        float bldEtaIn = 0.00976;
-        float bldPhiIn = 0.0929;
-        float blHoverE = 0.0765;
-        float blooEmooP = 0.184;
-        float bld0 = 0.0227;
-        float bldz = 0.379;
-        
-        float escEta = 2.5;
-        float etfullSigmaEtaEta = 0.0287;
-        float etdEtaIn = 0.00762;
-        float etdPhiIn = 0.0439;
-        float etHoverE = 0.0544;
-        float etooEmooP = 0.01;
-        float etd0 = 0.0377;
-        float etdz = 0.571;
-        
-        float elfullSigmaEtaEta = 0.0318;
-        float eldEtaIn = 0.00952;
-        float eldPhiIn = 0.181;
-        float elHoverE = 0.0824;
-        float elooEmooP = 0.125;
-        float eld0 = 0.242;
-        float eldz = 0.921;
         
         for(unsigned int i=0; i < v->size(); i++)
         {
@@ -386,30 +240,8 @@ public:
                 d.tight.vetoc = (d.veto == tPassing_Conversion_Veto_Electron_Cut)?true:false;
                 d.tight.mhitsc = (d.mhits == tElectron_Missing_Hits_Cut)?true:false;
                 d.tight.isoc   = (d.iso < tElectron_Relative_Isolation_Cut)?true:false;
-                d.tight.scEtac = (fabs(d.scEta) < escEta)?true:false;
+                d.tight.all = d.tight.ptc && d.tight.etac && d.tight.dxyc && d.tight.vetoc && d.tight.mhitsc && d.tight.isoc;
                 
-                if(fabs(d.scEta) <= bscEta)
-                {
-                d.tight.fullSigmaEtaEtac = (d.fullSigmaEtaEta < btfullSigmaEtaEta)?true:false;
-                d.tight.dEtaInc = (d.dEtaIn < btdEtaIn)?true:false;
-                d.tight.dPhiInc = (d.dPhiIn < btdPhiIn)?true:false;
-                d.tight.HoverEc = (d.HoverE < btHoverE)?true:false;
-                d.tight.ooEmooPc = (d.ooEmooP < btooEmooP)?true:false;
-                d.tight.d0c = (fabs(d.d0) < btd0)?true:false;
-                d.tight.dzc = (fabs(d.dz) < btdz)?true:false;
-                }
-                if(fabs(d.scEta) > bscEta && fabs(d.scEta) < escEta)
-                {
-                d.tight.fullSigmaEtaEtac = (d.fullSigmaEtaEta < etfullSigmaEtaEta)?true:false;
-                d.tight.dEtaInc = (d.dEtaIn < etdEtaIn)?true:false;
-                d.tight.dPhiInc = (d.dPhiIn < etdPhiIn)?true:false;
-                d.tight.HoverEc = (d.HoverE < etHoverE)?true:false;
-                d.tight.ooEmooPc = (d.ooEmooP < etooEmooP)?true:false;
-                d.tight.d0c = (fabs(d.d0) < etd0)?true:false;
-                d.tight.dzc = (fabs(d.dz) < etdz)?true:false;
-                }
-                
-                d.tight.all = d.tight.ptc && d.tight.etac && d.tight.dxyc && d.tight.vetoc && d.tight.mhitsc && d.tight.isoc && d.tight.scEtac && d.tight.fullSigmaEtaEtac && d.tight.dEtaInc && d.tight.dPhiInc && d.tight.HoverEc && d.tight.ooEmooPc && d.tight.d0c && d.tight.dzc;
                 
                 d.loose.ptc = (d.pt > lElectron_Cut_pt)?true:false;
                 d.loose.etac = (fabs( d.eta )< lElectron_Cut_eta)?true:false;
@@ -417,30 +249,7 @@ public:
                 d.loose.vetoc = (d.veto == lPassing_Conversion_Veto_Electron_Cut)?true:false;
                 d.loose.mhitsc = (d.mhits == lElectron_Missing_Hits_Cut)?true:false;
                 d.loose.isoc   = (d.iso < lElectron_Relative_Isolation_Cut)?true:false;
-                d.loose.scEtac = (fabs(d.scEta) < escEta)?true:false;
-
-                if(fabs(d.scEta) <= bscEta)
-                {
-                    d.loose.fullSigmaEtaEtac = (d.fullSigmaEtaEta < blfullSigmaEtaEta)?true:false;
-                    d.loose.dEtaInc = (d.dEtaIn < bldEtaIn)?true:false;
-                    d.loose.dPhiInc = (d.dPhiIn < bldPhiIn)?true:false;
-                    d.loose.HoverEc = (d.HoverE < blHoverE)?true:false;
-                    d.loose.ooEmooPc = (d.ooEmooP < blooEmooP)?true:false;
-                    d.loose.d0c = (fabs(d.d0) < bld0)?true:false;
-                    d.loose.dzc = (fabs(d.dz) < bldz)?true:false;
-                }
-                if(fabs(d.scEta) > bscEta && fabs(d.scEta) < escEta)
-                {
-                    d.loose.fullSigmaEtaEtac = (d.fullSigmaEtaEta < elfullSigmaEtaEta)?true:false;
-                    d.loose.dEtaInc = (d.dEtaIn < eldEtaIn)?true:false;
-                    d.loose.dPhiInc = (d.dPhiIn < eldPhiIn)?true:false;
-                    d.loose.HoverEc = (d.HoverE < elHoverE)?true:false;
-                    d.loose.ooEmooPc = (d.ooEmooP < elooEmooP)?true:false;
-                    d.loose.d0c = (fabs(d.d0) < eld0)?true:false;
-                    d.loose.dzc = (fabs(d.dz) < eldz)?true:false;
-                }
-                
-                d.loose.all = d.loose.ptc && d.loose.etac && d.loose.dxyc && d.loose.vetoc && d.loose.mhitsc && d.loose.isoc && d.loose.scEtac && d.loose.fullSigmaEtaEtac && d.loose.dEtaInc && d.loose.dPhiInc && d.loose.HoverEc && d.loose.ooEmooPc && d.loose.d0c && d.loose.dzc;
+                d.loose.all = d.loose.ptc && d.loose.etac && d.loose.dxyc && d.loose.vetoc && d.loose.mhitsc && d.loose.isoc;
                 
             }
         }
