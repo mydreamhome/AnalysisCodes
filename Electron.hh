@@ -10,7 +10,7 @@ class Electron
     struct DATA
     {
         
-        float  phi,eta,pt,dxy,veto,mhits,iso,charge,scEta,fullSigmaEtaEta,dEtaIn,dPhiIn,HoverE,ooEmooP,d0,dz;
+        float  eID,phi,eta,pt,dxy,veto,mhits,iso,charge,scEta,fullSigmaEtaEta,dEtaIn,dPhiIn,HoverE,ooEmooP,d0,dz;
         CUT    loose,tight;
     };
     
@@ -99,6 +99,7 @@ public:
 
             for(unsigned int i=0;i<electronPt->size();i++)
             {
+                d.eID = i;
                 d.pt = electronPt->at(i);
                 d.eta = electronEta->at(i);
                 d.phi = electronPhi->at(i);
@@ -171,7 +172,7 @@ public:
     
     
     
-    vector<vector<DATA>*>* selectData()
+    vector<vector<DATA>*>* selectData1()
     {
         vector<DATA>* dv;
         DATA d;
@@ -220,6 +221,62 @@ public:
         }
         cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
         cout<<"Total number of events having only one tight electron: "<< events <<endl;
+        return fv;
+    }
+ 
+    vector<vector<DATA>*>* selectData2()
+    {
+        vector<DATA>* dv;
+        DATA d;
+        
+        vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
+        int events =0;
+        int totalTightelectrons =0;
+        
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+            int elctron_number1 = 0;
+            int elctron_number2 = 0;
+
+            vector<DATA>* fdv= new vector<DATA>;
+            
+            dv=v->at(i);
+            
+            bool isEventSelected=false;
+            int tightCount=0;
+            
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                
+                if(d.tight.all)
+                {
+                    totalTightelectrons++;
+                    if(tightCount==0) elctron_number1 = j;
+                    if(tightCount==1) elctron_number2 = j;
+                    tightCount++;
+                }
+            }
+            
+            if(tightCount==2){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
+            }
+            //-----------------------
+            if(isEventSelected)
+            {
+                events++;
+                d=dv->at(elctron_number1);
+                fdv->push_back(d);
+                d=dv->at(elctron_number2);
+                //  cout<<"Selected (on basis of only 1 tight electron) EventID: "<<i<<"  S ElectronID: "<<elctron_number<<endl;
+                fdv->push_back(d);
+                // only fill one tight electron's information
+                
+            }
+            //-------------------------
+            fv->push_back(fdv);
+        }
+       // cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
+        cout<<"Total number of events having exactly two tight electrons: "<< events <<endl;
         return fv;
     }
     

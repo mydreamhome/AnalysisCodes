@@ -73,32 +73,76 @@ public:
                 }
 
                 }
-        cout<<"Total number of events having ooposite charge only one tight electron and only one tight muon: " << events <<endl;
+        cout<<"Total number of events having ooposite charge leptons: " << events <<endl;
         return v;
     }
 
-    void fillHisto(const char* outputFile)
+    void fillHisto(const char* outputFile, const char* fileName,int Case)
     {
         DATA d;
+        char fName[70];
         
-        fwlite::TFileService fs = fwlite::TFileService("electronMuonOppositeCharge.root");
-        TFileDirectory dir = fs.mkdir("electronMuonOppositeCharge");
-        TH1F* electronPt_  = dir.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* electronEta_  = dir.make<TH1F>("electronEta_"  , "eta"  ,   100,   -3.0, 3.0);
-        TH1F* electronPhi_  = dir.make<TH1F>("electronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
-        TH1F* muonPt_  = dir.make<TH1F>("muonPt_"  ,"pt"  ,   100,   0., 400.);
-        TH1F* muonEta_  = dir.make<TH1F>("muonEta_"  ,"eta"  ,   100,   -3.0, 3.0);
-        TH1F* muonPhi_  = dir.make<TH1F>("muonPhi_"  , "phi"  ,   100,  -3.5, 3.5);
-
+        sprintf(fName,"%s.root",fileName);
+        
+        fwlite::TFileService fs = fwlite::TFileService(fName);
+        TFileDirectory dir = fs.mkdir(fileName);
+        
+        TH1F* electronPt_=0;
+        TH1F* electronEta_=0;
+        TH1F* electronPhi_=0;
+        
+        TH1F* muonPt_=0;
+        TH1F* muonEta_=0;
+        TH1F* muonPhi_=0;
+        
+        if(Case==1 || Case==2)
+        {
+            electronPt_  = dir.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
+            electronEta_  = dir.make<TH1F>("electronEta_"  , "eta"  ,   100,   -3.0, 3.0);
+            electronPhi_  = dir.make<TH1F>("electronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
+        }
+        if(Case==1 || Case==3)
+        {
+             muonPt_  = dir.make<TH1F>("muonPt_"  ,"pt"  ,   100,   0., 400.);
+             muonEta_  = dir.make<TH1F>("muonEta_"  ,"eta"  ,   100,   -3.0, 3.0);
+             muonPhi_  = dir.make<TH1F>("muonPhi_"  , "phi"  ,   100,  -3.5, 3.5);
+        }
+        
         for(unsigned int i=0; i < v->size(); i++)
         {
             d=v->at(i);
-            electronPt_->Fill(d.electronPt);
-            electronEta_->Fill(d.electronEta);
-            electronPhi_->Fill(d.electronPhi);
-            muonPt_->Fill(d.muonPt);
-            muonEta_->Fill(d.muonEta);
-            muonPhi_->Fill(d.muonPhi);
+            if(Case==1)
+            {
+                electronPt_->Fill(d.electronPt);
+                electronEta_->Fill(d.electronEta);
+                electronPhi_->Fill(d.electronPhi);
+                muonPt_->Fill(d.muonPt);
+                muonEta_->Fill(d.muonEta);
+                muonPhi_->Fill(d.muonPhi);
+            }
+            if(Case==2)
+            {
+                electronPt_->Fill(d.electronPt);
+                electronEta_->Fill(d.electronEta);
+                electronPhi_->Fill(d.electronPhi);
+                
+                electronPt_->Fill(d.muonPt);
+                electronEta_->Fill(d.muonEta);
+                electronPhi_->Fill(d.muonPhi);
+                
+            }
+            
+            if(Case==3)
+            {
+                muonPt_->Fill(d.electronPt);
+                muonEta_->Fill(d.electronEta);
+                muonPhi_->Fill(d.electronPhi);
+                
+                muonPt_->Fill(d.muonPt);
+                muonEta_->Fill(d.muonEta);
+                muonPhi_->Fill(d.muonPhi);
+  
+            }
         }
         return;
     }

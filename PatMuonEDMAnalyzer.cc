@@ -1,4 +1,5 @@
 #include <memory>
+#include"stdio.h"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -164,38 +165,60 @@ int main(int argc, char* argv[])
     
 
     obe.setData(inputFiles_[0].c_str());
-    obe.fillHisto(outputFile_.c_str());
+  //  obe.fillHisto(outputFile_.c_str());
     
    //obe.printData(0,"Primary Events information.");
     
     
     
-    Electron obfe(obe.selectData());
- 
+    Electron obfe1(obe.selectData1());
+    Electron obfe2(obe.selectData2());
+    
     //obfe.printData(0,"Filltered Events information.");
     
     
     Muon obm;
     obm.setData(inputFiles_[0].c_str());
-    obm.fillHisto(outputFile_.c_str());
+  //  obm.fillHisto(outputFile_.c_str());
     
    // obm.printData(0,"Primary Events information for MUON.");
     
     
-    Muon obfm(obm.selectData());
+    Muon obfm1(obm.selectData1());
+    Muon obfm2(obm.selectData2());
+    
     //obfm.printData(0,"Filltered Events information for MUON.");
     
     ElectronMuon em;
-    em.setData(obfe,obfm);
-    em.fillHisto(outputFile_.c_str());
+    ElectronMuon em2e;
+    ElectronMuon em2mu;
+    em.setData1(obfe1,obfm1);
+    em2e.setData2(obfe2);
+    em2mu.setData3(obfm2);
+    
+    em.fillHisto(outputFile_.c_str(), "electronMuononeTeoneTm", 1);
+    em2e.fillHisto(outputFile_.c_str(), "electronMuononeTeoneTm2e", 2);
+    em2mu.fillHisto(outputFile_.c_str(), "electronMuononeTeoneTm2mu", 3);
     
     ElectronMuonOppChrg emopp;
+    ElectronMuonOppChrg emopp2e;
+    ElectronMuonOppChrg emopp2mu;
     emopp.setData(em);
-    emopp.fillHisto(outputFile_.c_str());
+    emopp2e.setData(em2e);
+    emopp2mu.setData(em2mu);
+    emopp.fillHisto(outputFile_.c_str(), "electronMuonOppositeCharge", 1);
+    emopp2e.fillHisto(outputFile_.c_str(), "electronMuonOppositeCharge2e", 2);
+    emopp2mu.fillHisto(outputFile_.c_str(), "electronMuonOppositeCharge2mu", 3);
     
     ElectronMuonExtraLoose emel;
-    emel.setData(emopp,obe,obm);
-    emel.fillHisto(outputFile_.c_str());
+    ElectronMuonExtraLoose emel2e;
+    ElectronMuonExtraLoose emel2mu;
+    emel.setData1(emopp,obe,obm);
+    emel2e.setData2(emopp2e,obe);
+    emel2mu.setData3(emopp2mu,obm);
+    emel.fillHisto(outputFile_.c_str(), "electronMuonExtraloose", 1);
+    emel2e.fillHisto(outputFile_.c_str(), "electronMuonExtraloose2e", 2 );
+    emel2mu.fillHisto(outputFile_.c_str(), "electronMuonExtraloose2mu", 3);
     
     Met obmet;
     obmet.setData(inputFiles_[0].c_str());
@@ -205,9 +228,15 @@ int main(int argc, char* argv[])
     
     
     ElectronMuonMet obEMM;
+    ElectronMuonMet obEMM2e;
+    ElectronMuonMet obEMM2mu;
     
     obEMM.setData(emel,obmet);
-    obEMM.fillHisto(outputFile_.c_str());
+    obEMM2e.setData(emel2e,obmet);
+    obEMM2mu.setData(emel2mu,obmet);
+   // obEMM.fillHisto(outputFile_.c_str());
+   // obEMM2e.fillHisto(outputFile_.c_str(), );
+   // obEMM2mu.fillHisto(outputFile_.c_str(), );
 
     
     return 0;

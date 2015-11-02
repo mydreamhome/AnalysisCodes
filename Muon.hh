@@ -10,7 +10,7 @@ class Muon
     struct DATA
     {
         
-        float  particleFlow,globalMuon,trackerMuon,eta,pt,iso,charge,phi;
+        float  mID,particleFlow,globalMuon,trackerMuon,eta,pt,iso,charge,phi;
         CUT    loose,tight;
     };
     
@@ -75,6 +75,7 @@ public:
             
             for(unsigned int i=0;i<muonPt->size();i++)
             {
+                d.mID = i;
                 d.particleFlow = ParticleFlow->at(i);
                 d.globalMuon = GlobalMuon->at(i);
                 d.trackerMuon = TrackerMuon->at(i);
@@ -133,7 +134,8 @@ public:
         cout<<"Total muons:"<<tmu<<" Total non empty events:"<<tevt<<endl;
         return;
     }
-    vector<vector<DATA>*>* selectData()
+    
+    vector<vector<DATA>*>* selectData1()
     {
         vector<DATA>* dv;
         DATA d;
@@ -181,6 +183,61 @@ public:
         }
         cout<<"Total number of tight muons: "<< totalTightMuons << endl;
         cout<<"Total number of events having only one tight muon: "<< events << endl;
+        return fv;
+    }
+    
+    vector<vector<DATA>*>* selectData2()
+    {
+        vector<DATA>* dv;
+        DATA d;
+        
+        vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
+        int events =0;
+        int totalTightMuons =0;
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+            int muon_number1 = 0;
+            int muon_number2 = 0;
+            
+            vector<DATA>* fdv= new vector<DATA>;
+            
+            dv=v->at(i);
+            
+            bool isEventSelected=false;
+            int tightCount=0;
+            
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                
+                if(d.tight.all)
+                {
+                    totalTightMuons++;
+                    if(tightCount==0) muon_number1 = j;
+                    if(tightCount==1) muon_number2 = j;
+                    tightCount++;
+                }
+            }
+            
+            if(tightCount==2){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
+            }
+            //-----------------------
+            if(isEventSelected)
+            {
+                events++;
+                d=dv->at(muon_number1);
+                fdv->push_back(d);
+                d=dv->at(muon_number2);
+                //  cout<<"Selected (on basis of only 1 tight electron) EventID: "<<i<<"  S ElectronID: "<<elctron_number<<endl;
+                fdv->push_back(d);
+                // only fill one tight electron's information
+                
+            }
+            //-------------------------
+            fv->push_back(fdv);
+        }
+       // cout<<"Total number of tight muons: "<< totalTightMuons <<endl;
+        cout<<"Total number of events having exactly two tight muons: "<< events <<endl;
         return fv;
     }
     
