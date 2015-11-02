@@ -68,7 +68,7 @@ public:
                 
                 if(!((d.tight.all==true && d.loose.all==true)  || (d.tight.all==false && d.loose.all==false)))
                 {
-                     cout<<evtID<<" RejectE"<<endl<<endl<<endl;
+                     //cout<<evtID<<" RejectE"<<endl<<endl<<endl;
                     rejected_event++;
                     isEventSelected=false;
                     break;

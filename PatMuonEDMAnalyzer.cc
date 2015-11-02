@@ -65,38 +65,14 @@ public:
             {
                 MetDATA metd =(MetDATA) dv->at(j);
                 
-                cout <<"i:   "<<i<<"j:   "<<j<<endl;
+               // cout <<"i:   "<<i<<"j:   "<<j<<endl;
                if(metd.ptc==true)
                                 {
                                     events++;
                                     DATA d ={evtID,metd.pt,emel.v->at(i).electronPt,emel.v->at(i).electronEta,emel.v->at(i).electronPhi,emel.v->at(i).muonPt,emel.v->at(i).muonEta,emel.v->at(i).muonPhi};
                                     v->push_back(d);
-                                   // cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
+                                    //cout<<"MET:EventID"<<evtID<<", MetID:"<<j<<"PT:"<<metd.pt<<", ptc:"<<metd.ptc<<endl;
                                 }
-         /*       {
-                    // ElectronMuon dvem = em;
-                    DATA d;
-                    //  emelc = dvem.v->at(0);
-                    
-                    d.evtID = evtID
-                    d.metPt = metd.pt;
-                    d.electronPt=em.v->at(i).electronPt;
-                    d.electronEta=em.v->at(i).electronEta;
-                    d.electronPhi=em.v->at(i).electronPhi;
-                    d.muonPt=em.v->at(i).muonPt;
-                    d.muonEta=em.v->at(i).muonEta;
-                    d.muonPhi=em.v->at(i).muonPhi;
-
-                    // cout<<"Selected (on basis of extra loose electrons & muons) EventID: "<<evtID<<", electronID:"<<emelc.eID<<", muonID:"<<emelc.mID<<", electronCharge:"<<emelc.ech<<", muonCharge:"<<emelc.mch<<endl;
-                    
-                    v->push_back(d);
-                }
-                */
-                
-                
-                
-                
-                
                else rejected_met++;
             }
            
