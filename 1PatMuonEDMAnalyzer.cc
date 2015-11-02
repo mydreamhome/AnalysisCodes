@@ -191,37 +191,6 @@ int main(int argc, char* argv[])
                   }
           }
           
-          if (want_to_select_only_opposite_charge_particles)
-          {
-              if(final_state_is_electron_muon)
-              {
-              if(event_selection_based_on_only_opposite_charge_particles(electron, muon, event))
-                  
-              {
-                  std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of electron and muon" <<std::endl;
-                  continue;
-              }
-              }
-              if(final_state_is_electron_electron)
-              {
-                  if(event_selection_based_on_only_opposite_charge_particles(electron, electron, event))
-                      
-                  {
-                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of electron and electron" <<std::endl;
-                      continue;
-                  }
-              }
-              if(final_state_is_muon_muon)
-              {
-                  if(event_selection_based_on_only_opposite_charge_particles(muon, muon, event))
-                      
-                  {
-                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of muon and muon" <<std::endl;
-                      continue;
-                  }
-              }
-          }
-          
           if (want_to_select_event_based_on_tight_cuts_pass)
           {
               if(final_state_is_electron_muon || final_state_is_electron_electron)
@@ -241,6 +210,38 @@ int main(int argc, char* argv[])
                   std::cout<<"event "<< (ievt+1) <<" rejected due to no muon passing the tight cuts" <<std::endl;
                   continue;
               }
+              }
+          }
+          
+          
+          if (want_to_select_only_opposite_charge_particles)
+          {
+              if(final_state_is_electron_muon)
+              {
+                  if(event_selection_based_on_only_opposite_charge_particles(electron, muon, event))
+                      
+                  {
+                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of electron and muon" <<std::endl;
+                      continue;
+                  }
+              }
+              if(final_state_is_electron_electron)
+              {
+                  if(event_selection_based_on_only_opposite_charge_particles(electron, electron, event))
+                      
+                  {
+                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of electron and electron" <<std::endl;
+                      continue;
+                  }
+              }
+              if(final_state_is_muon_muon)
+              {
+                  if(event_selection_based_on_only_opposite_charge_particles(muon, muon, event))
+                      
+                  {
+                      std::cout<<"event "<< (ievt+1) <<" rejected due to no opposite charge pair found of muon and muon" <<std::endl;
+                      continue;
+                  }
               }
           }
           
@@ -418,6 +419,180 @@ int iszero(std::vector<int>* a)
     }
     return 1;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int isExactlyTwo(int particle1, int particle2)
+{
+    std::vector<int>* a;
+    std::vector<int>* b;
+    
+    
+    if(a->size() == 1 && b->size() == 1) return 1;
+    return 0;
+
+}
+int isopposite(std::vector<void*>* c, std::vector<void*>* d){
+    std::vector<float>* a = (std::vector<float>*) (*c)[1];
+    std::vector<float>* b = (std::vector<float>*) (*d)[1];
+    for(unsigned int i=0; i<(a->size()); i++)
+    {
+        for(unsigned int j=0; j<(b->size()); j++)
+        {
+            if (((*a)[i] * (*b)[j]) < 0) return 1; //if isopposite or found opposite pair
+        }
+    }
+    return 0;
+}
+std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+std::vector<int>* collective_cuts(int particle, int type_of_cut, edm::EventBase const & event)
+{
+    std::vector<void*>* electronCuts(int, edm::EventBase const & );
+    std::vector<void*>* muonCuts(int, edm::EventBase const & );
+    
+    if(particle == 11){
+        std::vector<void*>* e = electronCuts(type_of_cut, event);
+        std::vector<int>* serial_number_of_passed_particle_in_event = (std::vector<int>*) (*e)[0];
+        return serial_number_of_passed_particle_in_event;
+    }
+    if(particle == 13){
+        std::vector<void*>* m = muonCuts(type_of_cut, event);
+        std::vector<int>* serial_number_of_passed_particle_in_event = (std::vector<int>*) (*m)[0];
+        return serial_number_of_passed_particle_in_event;
+    }
+    return 0;
+}
+std::vector<int>* loose_cuts_pass_matching_with_tight_cuts_pass(int particle, edm::EventBase const & event){
+#define loose 0
+#define tight 1
+
+    int isequal(std::vector<int>* , std::vector<int>* );
+    std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+    if(isequal(collective_cuts(particle, loose, event), collective_cuts(particle, tight, event))) return collective_cuts(particle, tight, event); //if matches // but want to written 1
+    else return 0;//if not matches
+}
+int loose_cuts_pass_matching_with_tight_cuts_pass(int particle, edm::EventBase const & event){
+#define loose 0
+#define tight 1
+    
+    int isequal(std::vector<int>* , std::vector<int>* );
+    std::vector<int>* collective_cuts(int, int, edm::EventBase const & );
+    if(isequal(collective_cuts(particle, loose, event), collective_cuts(particle, tight, event))) return 1; //if matches
+    else return 0;//if not matches
+}
+
+
+std::vector<void*>* particles_passing_tight_cuts_match_with_loose_cuts_are_isopposite(int particle1, int particle2, edm::EventBase const & event)
+std::vector<int>* collective_cuts(int particle, int type_of_cut, edm::EventBase const & event)
+{
+    std::vector<void*>* pointer_to_arrays;
+    std::vector<int>* serial_number_of_passed_particle1_in_event;
+    std::vector<int>* serial_number_of_passed_particle2_in_event;
+    std::vector<float>* charge_of_passed_particle1_in_event;
+    std::vector<float>* charge_of_passed_particle2_in_event;
+
+    pointer_to_arrays = new std::vector<void*> ;
+    serial_number_of_passed_particle1_in_event = new std::vector<int> ;
+    serial_number_of_passed_particle2_in_event = new std::vector<int> ;
+    charge_of_passed_particle1_in_event = new std::vector<float> ;
+    charge_of_passed_particle2_in_event = new std::vector<float> ;
+
+    std::vector<int>* loose_cuts_pass_matching_with_tight_cuts_pass(int, edm::EventBase const & );
+    std::vector<void*>* storing_charge_of_particle(int, edm::EventBase const & );
+
+    std::vector<int>* a = loose_cuts_pass_matching_with_tight_cuts_pass(particle1, event);
+    std::vector<int>* b = loose_cuts_pass_matching_with_tight_cuts_pass(particle2, event);
+    std::vector<void*>* c = storing_charge_of_particle(particle1, event);
+    std::vector<void*>* d = storing_charge_of_particle(particle2, event);
+
+    std::vector<float>* charge_of_particles1_in_event = (std::vector<float>*) (*c)[1];
+    std::vector<float>* charge_of_particles1_in_event = (std::vector<float>*) (*d)[1];
+
+    for(unsigned int i=0; i<(charge_of_particles1_in_event->size()); i++)
+    {
+        for(unsigned int j=0; j<(charge_of_particles1_in_event->size()); j++)
+        {
+            if (((*a)[i] * (*b)[j]) < 0) return 1; //if isopposite or found opposite pair
+        }
+    }
+    
+    
+    
+     std::vector<int>* c, std::vector<int>* d,
+    
+    
+    if(particle1 || particle2 == 11){
+        
+        std::vector<float>* a = (std::vector<float>*) (*c)[1];
+        std::vector<float>* b = (std::vector<float>*) (*d)[1];
+        for(unsigned int i=0; i<(a->size()); i++)
+        {
+            for(unsigned int j=0; j<(b->size()); j++)
+            {
+                if (((*a)[i] * (*b)[j]) < 0) return 1; //if isopposite or found opposite pair
+            }
+        }
+        std::vector<float>* collective_cuts_pt(int particle, int type_of_cut, edm::EventBase const & event)
+        {
+            std::vector<void*>* electronCuts(int, edm::EventBase const & );
+            std::vector<void*>* muonCuts(int, edm::EventBase const & );
+            
+            if(particle == 11){
+                std::vector<void*>* e = electronCuts(type_of_cut, event);
+                std::vector<float>* pt_of_passed_particle_in_event = (std::vector<float>*) (*e)[1];
+                return pt_of_passed_particle_in_event;
+            }
+            if(particle == 13){
+                std::vector<void*>* m = muonCuts(type_of_cut, event);
+                std::vector<float>* pt_of_passed_particle_in_event = (std::vector<float>*) (*m)[1];
+                return pt_of_passed_particle_in_event;
+        
+        
+        std::vector<void*>* e = electronCuts(type_of_cut, event);
+        std::vector<int>* serial_number_of_passed_particle_in_event = (std::vector<int>*) (*e)[0];
+        return serial_number_of_passed_particle_in_event;
+    }
+    
+
+    std::vector<void*>* c, std::vector<void*>* d
+    std::vector<void*>* storing_charge_of_particle(int, edm::EventBase const & )
+    std::vector<void*>* storing_charge_of_particle(int particle, edm::EventBase const & event)
+
+    
+    std::vector<float>* a = (std::vector<float>*) (*c)[1];
+    std::vector<float>* b = (std::vector<float>*) (*d)[1];
+    for(unsigned int i=0; i<(a->size()); i++)
+    {
+        for(unsigned int j=0; j<(b->size()); j++)
+        {
+            if (((*a)[i] * (*b)[j]) < 0) return 1; //if isopposite or found opposite pair
+        }
+    }
+    return 0;
+}
+
+
+
+        
+        
+        
+        
+        
+
+
+
 
 int event_selection_based_on_loose_cuts_pass_matching_with_tight_cuts_pass(int particle, edm::EventBase const & event)
 {
