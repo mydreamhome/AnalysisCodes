@@ -86,10 +86,10 @@ int main(int argc, char* argv[])
         bool final_state_is_electron_electron = false;
         bool final_state_is_muon_muon = false;
         
-        bool want_to_select_event_based_on_vertex_cuts_pass = true;
-        bool want_to_select_only_opposite_charge_particles = true;
-        bool want_to_select_event_based_on_tight_cuts_pass = true;
-        bool want_to_select_event_based_on_loose_cuts_pass_matching_with_tight_cuts_pass = true;
+        bool want_to_select_event_based_on_vertex_cuts_pass = false;
+        bool want_to_select_only_opposite_charge_particles = false;
+        bool want_to_select_event_based_on_tight_cuts_pass = false;
+        bool want_to_select_event_based_on_loose_cuts_pass_matching_with_tight_cuts_pass = false;
         
         bool want_to_fill_pt_of_selected_event = true;
         bool based_on_tight_cuts_pass = true;
@@ -289,8 +289,10 @@ std::vector<float>* collective_cuts_pt(int particle, int type_of_cut, edm::Event
     std::vector<void*>* muonCuts(int, edm::EventBase const & );
     
     if(particle == 11){
+        std::cout<<"electron cuts calling "<<std::endl;
         std::vector<void*>* e = electronCuts(type_of_cut, event);
         std::vector<float>* pt_of_passed_particle_in_event = (std::vector<float>*) (*e)[1];
+        std::cout<< "size of pt array : "<< (pt_of_passed_particle_in_event->size())<<std::endl;
         return pt_of_passed_particle_in_event;
     }
     if(particle == 13){
@@ -300,10 +302,10 @@ std::vector<float>* collective_cuts_pt(int particle, int type_of_cut, edm::Event
     }
     return 0;
 }
-
+/*
 int event_selection_based_on_vertex_cuts(edm::EventBase const & event)
 {
-    int iszero(std::vector<int>* );
+    int iszero(std::vector<float>* );
     std::vector<int>* cuts_of_vertices(edm::EventBase const & );
     if ((iszero(cuts_of_vertices(event)))) return 1;//event not select or not pass
     else return 0;//event select or pass
@@ -329,13 +331,20 @@ std::vector<int>* cuts_of_vertices(edm::EventBase const & event)
     event.getByLabel(std::string("vertexInfo:rho"), rhoo);
     
     // loop vertex collection and test cut and fill histogram of passed vertex fabs(VertexZ)
-    for(unsigned int i=0;i<(vtxZ->size());i++){
-        if((vtxZ)->at(i) < Vtx_Cut_z){
-            if((dof->at(i)) > Vtx_Cut_ndof){
-                if((rhoo)->at(i) < Vtx_Cut_rho){
-                    serial_number_of_passed_vertices_in_event->push_back((i+1));
-                }}}}
-   
+    int i = 0;
+    
+    for(std::vector<float>::const_iterator zz=vtxZ->begin(); zz!=vtxZ->end(); ++zz){
+        i++;
+        if( fabs(*zz) < Vtx_Cut_z){
+            for(std::vector<int>::const_iterator df=dof->begin(); df!=dof->end(); ++df){
+                if( (*df) > Vtx_Cut_ndof){
+                    for(std::vector<float>::const_iterator ro=rhoo->begin(); ro!=rhoo->end(); ++ro){
+                        if( (*ro) < Vtx_Cut_rho){
+                            serial_number_of_passed_vertices_in_event->push_back(i);
+                 
+                        }}
+                }}
+        }}
     return serial_number_of_passed_vertices_in_event;
 }
 
@@ -378,29 +387,27 @@ std::vector<void*>* storing_charge_of_particle(int particle, edm::EventBase cons
         event.getByLabel(std::string("muons:muCharge"), muonCharge);
 
         // loop electron, muon collection and fill histogram of electrons and muons charge and tell index number of electrons and muons
-        if(particle == 11)
-        {
-            for(unsigned int i=0;i<(electronCharge->size());i++)
-            {
-                serial_number_of_particle_stoted_in_event->push_back((i+1));
-                charge_of_particle_in_event->push_back((electronCharge)->at(i));
-            }
-        }
-        if(particle == 13)
-        {
-            for(unsigned int i=0;i<(muonCharge->size());i++)
-            {
-                serial_number_of_particle_stoted_in_event->push_back((i+1));
-                charge_of_particle_in_event->push_back((muonCharge)->at(i));
-            }
-        }
+        int i = 0;
         
+        if(particle == 11){
+        for(std::vector<float>::const_iterator charge=electronCharge->begin(); charge!=electronCharge->end(); ++charge){
+            i++;
+            serial_number_of_particle_stoted_in_event->push_back(i);
+            charge_of_particle_in_event->push_back(*charge);
+        }}
+        
+        if(particle == 13){
+            for(std::vector<float>::const_iterator charge=muonCharge->begin(); charge!=muonCharge->end(); ++charge){
+                i++;
+                serial_number_of_particle_stoted_in_event->push_back(i);
+                charge_of_particle_in_event->push_back(*charge);
+            }}
         pointer_to_arrays->push_back(serial_number_of_particle_stoted_in_event);
         pointer_to_arrays->push_back(charge_of_particle_in_event);
         
         return pointer_to_arrays;
-    }
-
+    }   
+ */
 int event_selection_based_on_tight_cuts_particles(int particle, edm::EventBase const & event)
     {
         int iszero(std::vector<int>* );
