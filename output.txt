@@ -1,0 +1,9 @@
+Total number of tight electrons: 6686
+Total number of events having only one tight electron: 6222
+Total number of tight muons: 8493
+Total number of events having only one tight muon: 7733
+Total number of events having ooposite charge only one tight electron and only one tight muon: 580
+total number of sselected events due to extra loose cuts : 578
+total number of rejected events due to extra loose cuts : 2
+total number of selected events due to no met passing cut381
+total number of rejected events due to no met passing cut197
