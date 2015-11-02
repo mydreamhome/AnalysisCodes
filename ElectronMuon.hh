@@ -87,31 +87,6 @@ public:
         return v;
     }
     
-    void fillHisto(const char* outputFile)
-    {
-        vector<DATA>* dv;
-        DATA d;
-        
-        fwlite::TFileService fs = fwlite::TFileService("electron_muon.root");
-        TFileDirectory dir = fs.mkdir("electron_muon");
-        TH1F* electronMuonPt_  = dir.make<TH1F>("electronMuonPt_"  , "pt"  ,   100,   0., 400.);
-        
-        for(unsigned int i=0; i < v->size(); i++)
-        {
-            dv=v->at(i);
-            for(unsigned int j=0;j<dv->size();j++)
-            {
-                d=dv->at(j);
-                if(d.tight.all)
-                    electronMuonPt_->Fill(d.pt);
-                
-            }
-            
-            
-        }
-        return;
-    }
- 
     ~ElectronMuon()
     {
         delete v;
