@@ -1,31 +1,34 @@
 class ElectronMuon;
+class ElectronMuonOppChrg;
 class ElectronMuonExtraLoose;
+class ElectronMuonMet;
 
 class Electron
 {
     struct CUT
     {
-        bool   etac,ptc,dxyc,vetoc,mhitsc,isoc,scEtac,fullSigmaEtaEtac,dEtaInc,dPhiInc,HoverEc,ooEmooPc,d0c,dzc,all;
+        bool   etac,ptc,dxyc,vetoc,mhitsc,isoc,fullSigmaEtaEtac,dEtaInc,dPhiInc,HoverEc,ooEmooPc,d0c,dzc,all;
     };
     struct DATA
     {
-        
         float  eID,phi,eta,pt,dxy,veto,mhits,iso,charge,scEta,fullSigmaEtaEta,dEtaIn,dPhiIn,HoverE,ooEmooP,d0,dz;
         CUT    loose,tight;
     };
     
     vector<vector<DATA>*>* v;
+    vector<int>* LeptMult;
     int cTTE,cEW1E,CEW2E;
-    
     
 public:
     Electron()
     {
         v = new vector<vector<DATA>*>;
+        LeptMult = new vector<int>;
     }
     Electron(vector<vector<DATA>*>* uv)
     {
         v=uv;
+        LeptMult = new vector<int>;
     }
     
     int getTTE(){return cTTE;}
@@ -209,6 +212,8 @@ public:
                 }
             }
             
+            LeptMult->push_back(tightCount);
+            
             if(tightCount==1){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
             }
             //-----------------------
@@ -334,54 +339,57 @@ public:
         vector<DATA>* dv;
         
         float tElectron_Cut_pt = 20.0;
-        float tElectron_Cut_eta = 2.5;
-        float tTransverse_Impact_Parameter_Cut = 0.04;
-        float tPassing_Conversion_Veto_Electron_Cut = 1;
-        
-        float tElectron_Missing_Hits_Cut = 0;
-        float tElectron_Relative_Isolation_Cut = 0.15;
+        float tElectron_Cut_eta = 2.4;
+      //  float tTransverse_Impact_Parameter_Cut = 0.04;
+        float tElectron_Relative_Isolation_Cut = 0.11;
  
-        float lElectron_Cut_pt = 10.0;
-        float lElectron_Cut_eta = 2.5;
-        float lTransverse_Impact_Parameter_Cut = 0.04;
-        float lPassing_Conversion_Veto_Electron_Cut = 1;
+        float lElectron_Cut_pt = 20.0;
+        float lElectron_Cut_eta = 2.4;
+      //  float lTransverse_Impact_Parameter_Cut = 0.04;
+        float lElectron_Relative_Isolation_Cut = 0.11;
         
-        float lElectron_Missing_Hits_Cut = 0;
-        float lElectron_Relative_Isolation_Cut = 0.15;
+        float bscEta = 1.44;
+        float btfullSigmaEtaEta = 0.009996;
+        float btdEtaIn = 0.008925;
+        float btdPhiIn = 0.035973;
+        float btHoverE = 0.050537;
+        float btooEmooP = 0.091942;
+        float btd0 = 0.012235;
+        float btdz = 0.042020;
+        float btElectron_Missing_Hits_Cut = 1;
+        float btPassing_Conversion_Veto_Electron_Cut = 1;
         
-        float bscEta = 1.479;
-        float btfullSigmaEtaEta = 0.0101;
-        float btdEtaIn = 0.0095;
-        float btdPhiIn = 0.0291;
-        float btHoverE = 0.0372;
-        float btooEmooP = 0.0174;
-        float btd0 = 0.0144;
-        float btdz = 0.323;
-
-        float blfullSigmaEtaEta = 0.0105;
-        float bldEtaIn = 0.00976;
-        float bldPhiIn = 0.0929;
-        float blHoverE = 0.0765;
-        float blooEmooP = 0.184;
-        float bld0 = 0.0227;
-        float bldz = 0.379;
+        float blfullSigmaEtaEta = 0.010331;
+        float bldEtaIn = 0.009277;
+        float bldPhiIn = 0.094739;
+        float blHoverE = 0.093068;
+        float blooEmooP = 0.189968;
+        float bld0 = 0.035904;
+        float bldz = 0.075496;
+        float blElectron_Missing_Hits_Cut = 1;
+        float blPassing_Conversion_Veto_Electron_Cut = 1;
         
-        float escEta = 2.5;
-        float etfullSigmaEtaEta = 0.0287;
-        float etdEtaIn = 0.00762;
-        float etdPhiIn = 0.0439;
-        float etHoverE = 0.0544;
-        float etooEmooP = 0.01;
-        float etd0 = 0.0377;
-        float etdz = 0.571;
+        float e1scEta = 1.57;
+        float e2scEta = 2.4;
+        float etfullSigmaEtaEta = 0.030135;
+        float etdEtaIn = 0.007429;
+        float etdPhiIn = 0.067879;
+        float etHoverE = 0.086782;
+        float etooEmooP = 0.100683;
+        float etd0 = 0.036719;
+        float etdz = 0.138142;
+        float etElectron_Missing_Hits_Cut = 1;
+        float etPassing_Conversion_Veto_Electron_Cut = 1;
         
-        float elfullSigmaEtaEta = 0.0318;
-        float eldEtaIn = 0.00952;
-        float eldPhiIn = 0.181;
-        float elHoverE = 0.0824;
-        float elooEmooP = 0.125;
-        float eld0 = 0.242;
-        float eldz = 0.921;
+        float elfullSigmaEtaEta = 0.031838;
+        float eldEtaIn = 0.009833;
+        float eldPhiIn = 0.149934;
+        float elHoverE = 0.115754;
+        float elooEmooP = 0.140662;
+        float eld0 = 0.099266;
+        float eldz = 0.197897;
+        float elElectron_Missing_Hits_Cut = 1;
+        float elPassing_Conversion_Veto_Electron_Cut = 1;
         
         for(unsigned int i=0; i < v->size(); i++)
         {
@@ -392,11 +400,9 @@ public:
                 
                 d.tight.ptc = (d.pt > tElectron_Cut_pt)?true:false;
                 d.tight.etac = (fabs( d.eta )< tElectron_Cut_eta)?true:false;
-                d.tight.dxyc = (d.dxy < tTransverse_Impact_Parameter_Cut)?true:false;
-                d.tight.vetoc = (d.veto == tPassing_Conversion_Veto_Electron_Cut)?true:false;
-                d.tight.mhitsc = (d.mhits == tElectron_Missing_Hits_Cut)?true:false;
+             //   d.tight.dxyc = (d.dxy < tTransverse_Impact_Parameter_Cut)?true:false;
                 d.tight.isoc   = (d.iso < tElectron_Relative_Isolation_Cut)?true:false;
-                d.tight.scEtac = (fabs(d.scEta) < escEta)?true:false;
+              //  d.tight.scEtac = (fabs(d.scEta) < escEta)?true:false;
                 
                 if(fabs(d.scEta) <= bscEta)
                 {
@@ -407,8 +413,10 @@ public:
                 d.tight.ooEmooPc = (d.ooEmooP < btooEmooP)?true:false;
                 d.tight.d0c = (fabs(d.d0) < btd0)?true:false;
                 d.tight.dzc = (fabs(d.dz) < btdz)?true:false;
+                d.tight.mhitsc = (d.mhits <= btElectron_Missing_Hits_Cut)?true:false;
+                d.tight.vetoc = (d.veto == btPassing_Conversion_Veto_Electron_Cut)?true:false;
                 }
-                if(fabs(d.scEta) > bscEta && fabs(d.scEta) < escEta)
+                if(fabs(d.scEta) > e1scEta && fabs(d.scEta) < e2scEta)
                 {
                 d.tight.fullSigmaEtaEtac = (d.fullSigmaEtaEta < etfullSigmaEtaEta)?true:false;
                 d.tight.dEtaInc = (d.dEtaIn < etdEtaIn)?true:false;
@@ -417,17 +425,17 @@ public:
                 d.tight.ooEmooPc = (d.ooEmooP < etooEmooP)?true:false;
                 d.tight.d0c = (fabs(d.d0) < etd0)?true:false;
                 d.tight.dzc = (fabs(d.dz) < etdz)?true:false;
+                d.tight.mhitsc = (d.mhits <= etElectron_Missing_Hits_Cut)?true:false;
+                d.tight.vetoc = (d.veto == etPassing_Conversion_Veto_Electron_Cut)?true:false;
                 }
                 
-                d.tight.all = d.tight.ptc && d.tight.etac && d.tight.dxyc && d.tight.vetoc && d.tight.mhitsc && d.tight.isoc && d.tight.scEtac && d.tight.fullSigmaEtaEtac && d.tight.dEtaInc && d.tight.dPhiInc && d.tight.HoverEc && d.tight.ooEmooPc && d.tight.d0c && d.tight.dzc;
+                d.tight.all = d.tight.ptc && d.tight.etac && d.tight.vetoc && d.tight.mhitsc && d.tight.isoc && d.tight.fullSigmaEtaEtac && d.tight.dEtaInc && d.tight.dPhiInc && d.tight.HoverEc && d.tight.ooEmooPc && d.tight.d0c && d.tight.dzc;
                 
                 d.loose.ptc = (d.pt > lElectron_Cut_pt)?true:false;
                 d.loose.etac = (fabs( d.eta )< lElectron_Cut_eta)?true:false;
-                d.loose.dxyc = (d.dxy < lTransverse_Impact_Parameter_Cut)?true:false;
-                d.loose.vetoc = (d.veto == lPassing_Conversion_Veto_Electron_Cut)?true:false;
-                d.loose.mhitsc = (d.mhits == lElectron_Missing_Hits_Cut)?true:false;
+               // d.loose.dxyc = (d.dxy < lTransverse_Impact_Parameter_Cut)?true:false;
                 d.loose.isoc   = (d.iso < lElectron_Relative_Isolation_Cut)?true:false;
-                d.loose.scEtac = (fabs(d.scEta) < escEta)?true:false;
+               // d.loose.scEtac = (fabs(d.scEta) < escEta)?true:false;
 
                 if(fabs(d.scEta) <= bscEta)
                 {
@@ -438,8 +446,10 @@ public:
                     d.loose.ooEmooPc = (d.ooEmooP < blooEmooP)?true:false;
                     d.loose.d0c = (fabs(d.d0) < bld0)?true:false;
                     d.loose.dzc = (fabs(d.dz) < bldz)?true:false;
+                    d.loose.mhitsc = (d.mhits <= blElectron_Missing_Hits_Cut)?true:false;
+                    d.loose.vetoc = (d.veto == blPassing_Conversion_Veto_Electron_Cut)?true:false;
                 }
-                if(fabs(d.scEta) > bscEta && fabs(d.scEta) < escEta)
+                if(fabs(d.scEta) > e1scEta && fabs(d.scEta) < e2scEta)
                 {
                     d.loose.fullSigmaEtaEtac = (d.fullSigmaEtaEta < elfullSigmaEtaEta)?true:false;
                     d.loose.dEtaInc = (d.dEtaIn < eldEtaIn)?true:false;
@@ -448,9 +458,11 @@ public:
                     d.loose.ooEmooPc = (d.ooEmooP < elooEmooP)?true:false;
                     d.loose.d0c = (fabs(d.d0) < eld0)?true:false;
                     d.loose.dzc = (fabs(d.dz) < eldz)?true:false;
+                    d.loose.mhitsc = (d.mhits <= elElectron_Missing_Hits_Cut)?true:false;
+                    d.loose.vetoc = (d.veto == elPassing_Conversion_Veto_Electron_Cut)?true:false;
                 }
                 
-                d.loose.all = d.loose.ptc && d.loose.etac && d.loose.dxyc && d.loose.vetoc && d.loose.mhitsc && d.loose.isoc && d.loose.scEtac && d.loose.fullSigmaEtaEtac && d.loose.dEtaInc && d.loose.dPhiInc && d.loose.HoverEc && d.loose.ooEmooPc && d.loose.d0c && d.loose.dzc;
+                d.loose.all = d.loose.ptc && d.loose.etac && d.loose.vetoc && d.loose.mhitsc && d.loose.isoc && d.loose.fullSigmaEtaEtac && d.loose.dEtaInc && d.loose.dPhiInc && d.loose.HoverEc && d.loose.ooEmooPc && d.loose.d0c && d.loose.dzc;
                 
             }
         }
@@ -459,16 +471,18 @@ public:
 
     void fillHisto(vector<TH1F*>* hv)
     {
-        vector<DATA>* dv;
-        DATA d;
-        
-        
+      //  vector<DATA>* dv;
+        //DATA d;
+     //   cout<<"error e "<<LeptMult->size()<<endl;
+      //  cout<<"error e v:  "<<v->size()<<endl;
         for(unsigned int i=0; i < v->size(); i++)
         {
-            dv=v->at(i);
-            int tightCount=0;
-            int elctron_number = 0;
-            for(unsigned int j=0;j<dv->size();j++)
+          //  dv=v->at(i);
+         //   int tightCount=0;
+         //   int elctron_number = 0;
+            if(LeptMult->at(i)){(hv->at(0))->Fill(LeptMult->at(i));}
+            if(v->at(i)){(hv->at(1))->Fill((v->at(i))->size());}
+          /*  for(unsigned int j=0;j<dv->size();j++)
             {
                 d=dv->at(j);
                 if(d.tight.all)
@@ -485,7 +499,7 @@ public:
                 (hv->at(1))->Fill(d.pt);
                 (hv->at(2))->Fill(d.eta);
                 (hv->at(3))->Fill(d.phi);
-            }
+            }*/
         }
         return;
     }
@@ -500,19 +514,25 @@ public:
     {
         vector<TH1F*>* hv = new vector<TH1F*>;
         
-        // TFileDirectory dir = fs.mkdir("tight_electron");
-        TH1F* electronPt_  = fs.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* exactlyOneelectronPt_  = fs.make<TH1F>("exactlyOneelectronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* exactlyOneelectronEta_  = fs.make<TH1F>("exactlyOneelectronEta_"  , "eta"  ,   100,   -3.0, 3.0);
-        TH1F* exactlyOneelectronPhi_  = fs.make<TH1F>("exactlyOneelectronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
+      //  TFileDirectory dir = fs.mkdir("tight_electron");
+      //  TH1F* electronPt_  = fs.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
+      //  TH1F* exactlyOneelectronPt_  = fs.make<TH1F>("exactlyOneelectronPt_"  , "pt"  ,   100,   0., 400.);
+      //  TH1F* exactlyOneelectronEta_  = fs.make<TH1F>("exactlyOneelectronEta_"  , "eta"  ,   100,   -3.0, 3.0);
+      //  TH1F* exactlyOneelectronPhi_  = fs.make<TH1F>("exactlyOneelectronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
+        TH1F* electronMult_  = fs.make<TH1F>("electronMult_"  , "electronMultiplcity"  ,   20,  0.0, 20.0);
+        TH1F* beforeElectronMult_  = fs.make<TH1F>("beforeElectronMult_"  , "beforeElectronMultiplcity"  ,   20,  0.0, 20.0);
 
-        hv->push_back(electronPt_);
-        hv->push_back(exactlyOneelectronPt_);
-        hv->push_back(exactlyOneelectronEta_);
-        hv->push_back(exactlyOneelectronPhi_);
-
+      //  hv->push_back(electronPt_);
+      //  hv->push_back(exactlyOneelectronPt_);
+      //  hv->push_back(exactlyOneelectronEta_);
+      //  hv->push_back(exactlyOneelectronPhi_);
+        hv->push_back(electronMult_);
+        hv->push_back(beforeElectronMult_);
+        
         return hv;
     }
     friend class ElectronMuon;
+    friend class ElectronMuonOppChrg;
     friend class ElectronMuonExtraLoose;
+    friend class ElectronMuonMet;
 };
