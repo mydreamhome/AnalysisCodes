@@ -15,8 +15,6 @@ class Electron
     };
     
     vector<vector<DATA>*>* v;
-    int cTTE,cEW1E,CEW2E;
-    
     
 public:
     Electron()
@@ -27,10 +25,6 @@ public:
     {
         v=uv;
     }
-    
-    int getTTE(){return cTTE;}
-    int getEW1E(){return cEW1E;}
-    int getEW2E(){return CEW2E;}    
     
     void setData(const char* fname)
     {
@@ -225,10 +219,8 @@ public:
             //-------------------------
             fv->push_back(fdv);
         }
-        //cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
-        //cout<<"Total number of events having only one tight electron: "<< events <<endl;
-        cTTE=totalTightelectrons;
-        cEW1E=events;
+        cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
+        cout<<"Total number of events having only one tight electron: "<< events <<endl;
         return fv;
     }
  
@@ -284,12 +276,11 @@ public:
             fv->push_back(fdv);
         }
        // cout<<"Total number of tight electrons: "<< totalTightelectrons <<endl;
-        //cout<<"Total number of events having exactly two tight electrons: "<< events <<endl;
-        CEW2E=events;
+        cout<<"Total number of events having exactly two tight electrons: "<< events <<endl;
         return fv;
     }
     
- /*   void fillHisto(const char* outputFile)
+    void fillHisto(const char* outputFile)
     {
         vector<DATA>* dv;
         DATA d;
@@ -327,7 +318,6 @@ public:
         }
         return;
     }
-    */
     void setCuts()
     {
         
@@ -456,39 +446,6 @@ public:
         }
         return;
     }
-
-    void fillHisto(vector<TH1F*>* hv)
-    {
-        vector<DATA>* dv;
-        DATA d;
-        
-        
-        for(unsigned int i=0; i < v->size(); i++)
-        {
-            dv=v->at(i);
-            int tightCount=0;
-            int elctron_number = 0;
-            for(unsigned int j=0;j<dv->size();j++)
-            {
-                d=dv->at(j);
-                if(d.tight.all)
-                {
-                    (hv->at(0))->Fill(d.pt);
-                    elctron_number = j;
-                    tightCount++;
-                }
-                
-            }
-            if(tightCount==1)
-            {
-                d=dv->at(elctron_number);
-                (hv->at(1))->Fill(d.pt);
-                (hv->at(2))->Fill(d.eta);
-                (hv->at(3))->Fill(d.phi);
-            }
-        }
-        return;
-    }
     
     ~Electron()
     {
@@ -496,23 +453,6 @@ public:
         v=0;
     }
     
-    static vector<TH1F*>* getHistPointers(fwlite::TFileService& fs)
-    {
-        vector<TH1F*>* hv = new vector<TH1F*>;
-        
-        // TFileDirectory dir = fs.mkdir("tight_electron");
-        TH1F* electronPt_  = fs.make<TH1F>("electronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* exactlyOneelectronPt_  = fs.make<TH1F>("exactlyOneelectronPt_"  , "pt"  ,   100,   0., 400.);
-        TH1F* exactlyOneelectronEta_  = fs.make<TH1F>("exactlyOneelectronEta_"  , "eta"  ,   100,   -3.0, 3.0);
-        TH1F* exactlyOneelectronPhi_  = fs.make<TH1F>("exactlyOneelectronPhi_"  , "phi"  ,   100,  -3.5, 3.5);
-
-        hv->push_back(electronPt_);
-        hv->push_back(exactlyOneelectronPt_);
-        hv->push_back(exactlyOneelectronEta_);
-        hv->push_back(exactlyOneelectronPhi_);
-
-        return hv;
-    }
     friend class ElectronMuon;
     friend class ElectronMuonExtraLoose;
 };

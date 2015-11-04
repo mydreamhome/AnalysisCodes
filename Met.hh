@@ -10,7 +10,6 @@ class Met
     };
     
     vector<vector<DATA>*>* v;
-    int cMetCut;
     
 public:
     Met()
@@ -21,8 +20,6 @@ public:
     {
      v=uv;
     }
-    
-    int getEWMetCut(){return cMetCut;}
     
     void setData(const char* fname)
     {
@@ -136,12 +133,11 @@ public:
             //-------------------------
             fv->push_back(fdv);
         }
-     //   cout<<"Total number of Mets passing cuts: "<< totalPassingMets <<endl;
-      //  cout<<"Total number of events having cut passing Mets: "<< events <<endl;
-        cMetCut = totalPassingMets;
+        cout<<"Total number of Mets passing cuts: "<< totalPassingMets <<endl;
+        cout<<"Total number of events having cut passing Mets: "<< events <<endl;
         return fv;
     }
-/*
+    
     void fillHisto(const char* outputFile)
     {
         vector<DATA>* dv;
@@ -165,27 +161,6 @@ public:
         }
         return;
     }
- */
-    
-    void fillHisto(vector<TH1F*>* hv)
-    {
-        vector<DATA>* dv;
-        DATA d;
-        
-        for(unsigned int i=0; i < v->size(); i++)
-        {
-            dv=v->at(i);
-            for(unsigned int j=0;j<dv->size();j++)
-            {
-                d=dv->at(j);
-                if(d.ptc)
-                    (hv->at(0))->Fill(d.pt);
-                
-            }
-            
-        }
-        return;
-    }
     
     void setCuts()
     {
@@ -203,17 +178,6 @@ public:
             }
         }
         return;
-    }
-    
-    static vector<TH1F*>* getHistPointers(fwlite::TFileService& fs)
-    {
-        vector<TH1F*>* hv = new vector<TH1F*>;
-        
-        TH1F* MetPt_  = fs.make<TH1F>("MetPt_"  , "pt"  ,   100,   0., 400.);
-        
-        hv->push_back(MetPt_);
-        
-        return hv;
     }
     
     friend class ElectronMuonMet;

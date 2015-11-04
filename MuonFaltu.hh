@@ -3,19 +3,20 @@ class ElectronMuonExtraLoose;
 
 class Muon
 {
-    struct CUT
+   /* struct CUT
     {
-        bool   particleFlowc,globalMuonc,trackerMuonc,etac,ptc,isoc,all;
-    };
+        bool   etac,ptc,isoc,tightc,all;
+    };*/
     struct DATA
     {
         
-        float  mID,particleFlow,globalMuon,trackerMuon,eta,pt,iso,charge,phi;
-        CUT    loose,tight;
+        float  mID,eta,pt,iso,charge,phi,tight;
+        bool   etac,ptc,isoc,tightc,all;
+       // CUT    loose,tight;
     };
     
     vector<vector<DATA>*>*  v;
-    
+    int cTTM;
 public:
     Muon()
     {
@@ -26,7 +27,9 @@ public:
         
         v=uv;
     }
-    
+    int getTTM(){return cTTM;}
+   // int getEW1M(){return cEW1M;}
+   // int getEW2M(){return cEW2M;}
     
     void setData(const char* fname)
     {
@@ -45,7 +48,7 @@ public:
         {
             edm::EventBase const & event = ev;
             
-            // Handle to the muon ParticleFlow
+        /*    // Handle to the muon ParticleFlow
             edm::Handle<std::vector<float> > ParticleFlow;
             event.getByLabel(std::string("muons:muIsPFMuon"), ParticleFlow);
             // Handle to the muon GlobalMuon
@@ -53,7 +56,7 @@ public:
             event.getByLabel(std::string("muons:muIsGlobalMuon"), GlobalMuon);
             // Handle to the muon TrackerMuon
             edm::Handle<std::vector<float> > TrackerMuon;
-            event.getByLabel(std::string("muons:muIsTrackerMuon"), TrackerMuon);
+            event.getByLabel(std::string("muons:muIsTrackerMuon"), TrackerMuon);*/
             // Handle to the muon muonPt
             edm::Handle<std::vector<float> > muonPt;
             event.getByLabel(std::string("muons:muPt"), muonPt);
@@ -69,6 +72,9 @@ public:
             // Handle to the muon charge
             edm::Handle<std::vector<float> > muonPhi;
             event.getByLabel(std::string("muons:muPhi"), muonPhi);
+            // Handle to the muon tight
+            edm::Handle<std::vector<float> > muonTight;
+            event.getByLabel(std::string("muons:muIsTightMuon"), muonTight);
             
             vector<DATA>* dv = new vector<DATA>;
             DATA d;
@@ -76,15 +82,15 @@ public:
             for(unsigned int i=0;i<muonPt->size();i++)
             {
                 d.mID = i;
-                d.particleFlow = ParticleFlow->at(i);
+             /*   d.particleFlow = ParticleFlow->at(i);
                 d.globalMuon = GlobalMuon->at(i);
-                d.trackerMuon = TrackerMuon->at(i);
+                d.trackerMuon = TrackerMuon->at(i);*/
                 d.pt = muonPt->at(i);
                 d.eta = muonEta->at(i);
                 d.iso  = muonIso04->at(i);
                 d.charge = muonCharge->at(i);
                 d.phi = muonPhi->at(i);
-                
+                d.tight = muonTight->at(i);
                 dv->push_back(d);
                 
             }
@@ -100,7 +106,7 @@ public:
         return;
     }
     
-    void printData(int p,string msg)
+ /*   void printData(int p,string msg)
     {
         vector<DATA>* dv;
         DATA d;
@@ -134,7 +140,40 @@ public:
         cout<<"Total muons:"<<tmu<<" Total non empty events:"<<tevt<<endl;
         return;
     }
-    
+   */
+    vector<vector<DATA>*>* selectData()
+    {
+        vector<DATA>* dv;
+        DATA d;
+        int tightCount=0;
+        vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
+        
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+            vector<DATA>* fdv= new vector<DATA>;
+            
+            dv=v->at(i);
+            
+          //  bool isEventSelected=false;
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                
+                if(d.all)
+                {
+                  //  muon_number = j;
+                    fdv->push_back(d);
+                    tightCount++;
+                }
+            }
+            
+            fv->push_back(fdv);
+        }
+        
+        cTTM=tightCount;
+        return fv;
+    }
+  /*
     vector<vector<DATA>*>* selectData1()
     {
         vector<DATA>* dv;
@@ -142,7 +181,7 @@ public:
         
         vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
         int events = 0;
-        int totalTightMuons = 0;
+        int muonSelection = 0;
         for(unsigned int i=0; i < v->size(); i++)
         {
             int muon_number = 0;
@@ -151,21 +190,22 @@ public:
             dv=v->at(i);
             
             bool isEventSelected=false;
-            int tightCount=0;
+          //  int tightCount=0;
             
             for(unsigned int j=0;j<dv->size();j++)
             {
                 d=dv->at(j);
                 
-                if(d.tight.all)
+                if(d.all)
                 {
-                    totalTightMuons++;
+                    muonSelection++;
                     muon_number = j;
-                  tightCount++;
+                //  tightCount++;
                 }
             }
             
-            if(tightCount==1){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
+         //   if(tightCount==1){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
+            if(tightCount >= 1){isEventSelected=true;//cout<<i<<" Reject2"<<endl;
             }
             //-----------------------
             if(isEventSelected)
@@ -181,8 +221,10 @@ public:
             //-------------------------
             fv->push_back(fdv);
         }
-        cout<<"Total number of tight muons: "<< totalTightMuons << endl;
-        cout<<"Total number of events having only one tight muon: "<< events << endl;
+    //    cout<<"Total number of tight muons: "<< muonSelection << endl;
+      //  cout<<"Total number of events having only one tight muon: "<< events << endl;
+        cTTM=muonSelection;
+        cEW1M=events;
         return fv;
     }
     
@@ -193,7 +235,7 @@ public:
         
         vector<vector<DATA>*>* fv = new vector<vector<DATA>*>;
         int events =0;
-        int totalTightMuons =0;
+        int muonSelection =0;
         for(unsigned int i=0; i < v->size(); i++)
         {
             int muon_number1 = 0;
@@ -212,7 +254,7 @@ public:
                 
                 if(d.tight.all)
                 {
-                    totalTightMuons++;
+                    muonSelection++;
                     if(tightCount==0) muon_number1 = j;
                     if(tightCount==1) muon_number2 = j;
                     tightCount++;
@@ -236,12 +278,13 @@ public:
             //-------------------------
             fv->push_back(fdv);
         }
-       // cout<<"Total number of tight muons: "<< totalTightMuons <<endl;
-        cout<<"Total number of events having exactly two tight muons: "<< events <<endl;
+       // cout<<"Total number of tight muons: "<< muonSelection <<endl;
+    //    cout<<"Total number of events having exactly two tight muons: "<< events <<endl;
+        cEW2M=events;
         return fv;
     }
-    
-    void fillHisto(const char* outputFile)
+    */
+  /*  void fillHisto(const char* outputFile)
     {
         vector<DATA>* dv;
         DATA d;
@@ -278,26 +321,27 @@ public:
             }
         }
         return;
-    }
+    }*/
     
     void setCuts()
     {
         
         vector<DATA>* dv;
         
-        int tParticle_Flow_Muon_Cut = 1;
+       /* int tParticle_Flow_Muon_Cut = 1;
         int tGlobal_Muon_Cut = 1;
-        int tTracker_Muon_Cut = 1;
+        int tTracker_Muon_Cut = 1;*/
         float tMuon_Tight_Cut_pt = 20.0;
         float tMuon_Tight_Cut_eta = 2.4;
-        float tMuon_Relative_Isolation_Cut = 0.20;
+        float tMuon_Relative_Isolation_Cut = 0.12;
+        float tightMuon = 1;
         
-        int lParticle_Flow_Muon_Cut = 1;
+       /* int lParticle_Flow_Muon_Cut = 1;
         int lGlobal_Muon_Cut = 1;
         int lTracker_Muon_Cut = 1;
         float lMuon_Tight_Cut_pt = 20.0;
         float lMuon_Tight_Cut_eta = 2.4;
-        float lMuon_Relative_Isolation_Cut = 0.20;
+        float lMuon_Relative_Isolation_Cut = 0.20;*/
         
         for(unsigned int i=0; i < v->size(); i++)
         {
@@ -306,31 +350,84 @@ public:
             {
                 DATA& d=dv->at(j);
                 
-                d.tight.particleFlowc = (d.particleFlow == tParticle_Flow_Muon_Cut)?true:false;
-                d.tight.globalMuonc = (d.globalMuon == tGlobal_Muon_Cut)?true:false;
-                d.tight.trackerMuonc = (d.trackerMuon == tTracker_Muon_Cut)?true:false;
-                d.tight.ptc = (d.pt > tMuon_Tight_Cut_pt)?true:false;
-                d.tight.etac = (fabs( d.eta ) < tMuon_Tight_Cut_eta)?true:false;
-                d.tight.isoc = (d.iso < tMuon_Relative_Isolation_Cut)?true:false;
-                d.tight.all = d.tight.particleFlowc && d.tight.globalMuonc && d.tight.trackerMuonc && d.tight.ptc && d.tight.etac && d.tight.isoc;
+          //      d.tight.particleFlowc = (d.particleFlow == tParticle_Flow_Muon_Cut)?true:false;
+            //    d.tight.globalMuonc = (d.globalMuon == tGlobal_Muon_Cut)?true:false;
+              //  d.tight.trackerMuonc = (d.trackerMuon == tTracker_Muon_Cut)?true:false;
+                d.ptc = (d.pt > tMuon_Tight_Cut_pt)?true:false;
+                d.etac = (fabs( d.eta ) < tMuon_Tight_Cut_eta)?true:false;
+                d.isoc = (d.iso < tMuon_Relative_Isolation_Cut)?true:false;
+                d.tightc = (d.tight == tightMuon)?true:false;
+                d.all = d.ptc && d.etac && d.isoc && d.tightc;
                 
-                d.loose.particleFlowc = (d.particleFlow == lParticle_Flow_Muon_Cut)?true:false;
+            /*    d.loose.particleFlowc = (d.particleFlow == lParticle_Flow_Muon_Cut)?true:false;
                 d.loose.globalMuonc = (d.globalMuon == lGlobal_Muon_Cut)?true:false;
                 d.loose.trackerMuonc = (d.trackerMuon == lTracker_Muon_Cut)?true:false;
                 d.loose.ptc = (d.pt > lMuon_Tight_Cut_pt)?true:false;
                 d.loose.etac = (fabs( d.eta ) < lMuon_Tight_Cut_eta)?true:false;
                 d.loose.isoc = (d.iso < lMuon_Relative_Isolation_Cut)?true:false;
-                d.loose.all = d.loose.particleFlowc && d.loose.globalMuonc && d.loose.trackerMuonc && d.loose.ptc && d.loose.etac && d.loose.isoc;
+                d.loose.all = d.loose.particleFlowc && d.loose.globalMuonc && d.loose.trackerMuonc && d.loose.ptc && d.loose.etac && d.loose.isoc;*/
             }
         }
         
         return;
     }
+    
+    void fillHisto(vector<TH1F*>* hv)
+    {
+        vector<DATA>* dv;
+        DATA d;
+        
+        
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+            dv=v->at(i);
+            int tightCount=0;
+            int muon_number = 0;
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                if(d.tight.all)
+                {
+                    (hv->at(0))->Fill(d.pt);
+                    muon_number = j;
+                    tightCount++;
+                }
+                
+            }
+            if(tightCount==1)
+            {
+                d=dv->at(muon_number);
+                (hv->at(1))->Fill(d.pt);
+                (hv->at(2))->Fill(d.eta);
+                (hv->at(3))->Fill(d.phi);
+            }
+        }
+        return;
+    }
+    
     ~Muon()
     {
         
         delete v;
         v=0;
+    }
+    
+    static vector<TH1F*>* getHistPointers(fwlite::TFileService& fs)
+    {
+        vector<TH1F*>* hv = new vector<TH1F*>;
+        
+        // TFileDirectory dir = fs.mkdir("tight_muon");
+        TH1F* muonPt_  = fs.make<TH1F>("muonPt_"  , "pt"  ,   100,   0., 400.);
+        TH1F* exactlyOneMuonPt_  = fs.make<TH1F>("exactlyOneMuonPt_"  , "pt"  ,   100,   0., 400.);
+        TH1F* exactlyOneMuonEta_  = fs.make<TH1F>("exactlyOneMuonEta_"  , "eta"  ,   100,   -3.0, 3.0);
+        TH1F* exactlyOneMuonPhi_  = fs.make<TH1F>("exactlyOneMuonPhi_"  , "phi"  ,   100,  -3.5, 3.5);
+        
+        hv->push_back(muonPt_);
+        hv->push_back(exactlyOneMuonPt_);
+        hv->push_back(exactlyOneMuonEta_);
+        hv->push_back(exactlyOneMuonPhi_);
+        
+        return hv;
     }
     
     friend class ElectronMuon;
