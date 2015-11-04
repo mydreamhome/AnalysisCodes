@@ -15,7 +15,7 @@ class Muon
     };
     
     vector<vector<DATA>*>*  v;
-    
+    int cTTM,cEW1M,cEW2M;
 public:
     Muon()
     {
@@ -26,7 +26,9 @@ public:
         
         v=uv;
     }
-    
+    int getTTM(){return cTTM;}
+    int getEW1M(){return cEW1M;}
+    int getEW2M(){return cEW2M;}
     
     void setData(const char* fname)
     {
@@ -181,8 +183,10 @@ public:
             //-------------------------
             fv->push_back(fdv);
         }
-        cout<<"Total number of tight muons: "<< totalTightMuons << endl;
-        cout<<"Total number of events having only one tight muon: "<< events << endl;
+    //    cout<<"Total number of tight muons: "<< totalTightMuons << endl;
+      //  cout<<"Total number of events having only one tight muon: "<< events << endl;
+        cTTM=totalTightMuons;
+        cEW1M=events;
         return fv;
     }
     
@@ -237,11 +241,12 @@ public:
             fv->push_back(fdv);
         }
        // cout<<"Total number of tight muons: "<< totalTightMuons <<endl;
-        cout<<"Total number of events having exactly two tight muons: "<< events <<endl;
+    //    cout<<"Total number of events having exactly two tight muons: "<< events <<endl;
+        cEW2M=events;
         return fv;
     }
     
-    void fillHisto(const char* outputFile)
+  /*  void fillHisto(const char* outputFile)
     {
         vector<DATA>* dv;
         DATA d;
@@ -278,7 +283,7 @@ public:
             }
         }
         return;
-    }
+    }*/
     
     void setCuts()
     {
@@ -326,11 +331,63 @@ public:
         
         return;
     }
+    
+    void fillHisto(vector<TH1F*>* hv)
+    {
+        vector<DATA>* dv;
+        DATA d;
+        
+        
+        for(unsigned int i=0; i < v->size(); i++)
+        {
+            dv=v->at(i);
+            int tightCount=0;
+            int muon_number = 0;
+            for(unsigned int j=0;j<dv->size();j++)
+            {
+                d=dv->at(j);
+                if(d.tight.all)
+                {
+                    (hv->at(0))->Fill(d.pt);
+                    muon_number = j;
+                    tightCount++;
+                }
+                
+            }
+            if(tightCount==1)
+            {
+                d=dv->at(muon_number);
+                (hv->at(1))->Fill(d.pt);
+                (hv->at(2))->Fill(d.eta);
+                (hv->at(3))->Fill(d.phi);
+            }
+        }
+        return;
+    }
+    
     ~Muon()
     {
         
         delete v;
         v=0;
+    }
+    
+    static vector<TH1F*>* getHistPointers(fwlite::TFileService& fs)
+    {
+        vector<TH1F*>* hv = new vector<TH1F*>;
+        
+        // TFileDirectory dir = fs.mkdir("tight_muon");
+        TH1F* muonPt_  = fs.make<TH1F>("muonPt_"  , "pt"  ,   100,   0., 400.);
+        TH1F* exactlyOneMuonPt_  = fs.make<TH1F>("exactlyOneMuonPt_"  , "pt"  ,   100,   0., 400.);
+        TH1F* exactlyOneMuonEta_  = fs.make<TH1F>("exactlyOneMuonEta_"  , "eta"  ,   100,   -3.0, 3.0);
+        TH1F* exactlyOneMuonPhi_  = fs.make<TH1F>("exactlyOneMuonPhi_"  , "phi"  ,   100,  -3.5, 3.5);
+        
+        hv->push_back(muonPt_);
+        hv->push_back(exactlyOneMuonPt_);
+        hv->push_back(exactlyOneMuonEta_);
+        hv->push_back(exactlyOneMuonPhi_);
+        
+        return hv;
     }
     
     friend class ElectronMuon;
